@@ -5,10 +5,12 @@
 | Node Group | Instance Type | vCPU | RAM | Min | Max | Desired |
 | --- | --- | --- | --- | --- | --- | --- |
 | system | t3.medium | 2 | 4 GB | 1 | 2 | 1 |
-| app | t3.large | 2 | 8 GB | 1 | 3 | 1 |
+| app | t3.xlarge | 4 | 16 GB | 1 | 3 | 1 |
+| gpu | g5.2xlarge | 8 | 32 GB | 1 | 2 | 1 |
 
 - **system** nodes run Kubernetes infrastructure: CoreDNS, VPC CNI, kube-proxy, ALB Controller, Cluster Autoscaler, External Secrets Operator, CloudWatch Agent
 - **app** nodes run application workloads: backend, web, auth, celery workers
+- **gpu** nodes run GPU-accelerated workloads (1x NVIDIA A10G GPU); Cluster Autoscaler scales up to 2 nodes under load
 - Starts at 2 nodes; Cluster Autoscaler scales app nodes up to 3 automatically under load
 
 ### Application Pod Scaling

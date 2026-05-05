@@ -90,11 +90,28 @@ module "eks" {
     }
     app = {
       ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = ["t3.large"]
+      instance_types = ["t3.xlarge"]
       min_size       = 1
       max_size       = 3
       desired_size   = 1
       labels         = { role = "app" }
+      tags = {
+        "k8s.io/cluster-autoscaler/enabled"                = "true"
+        "k8s.io/cluster-autoscaler/${var.name}-${var.env}" = "owned"
+      }
+    }
+    gpu = {
+      ami_type       = "AL2_x86_64_GPU"
+      instance_types = ["g5.2xlarge"]
+      min_size       = 1
+      max_size       = 2
+      desired_size   = 1
+      labels         = { role = "gpu" }
+      taints = [{
+        key    = "nvidia.com/gpu"
+        value  = "true"
+        effect = "NO_SCHEDULE"
+      }]
       tags = {
         "k8s.io/cluster-autoscaler/enabled"                = "true"
         "k8s.io/cluster-autoscaler/${var.name}-${var.env}" = "owned"
