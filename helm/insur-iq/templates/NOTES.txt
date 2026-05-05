@@ -1,0 +1,14 @@
+{{ include "insur-iq.fullname" . }} installed.
+
+App URL:        https://{{ include "insur-iq.domain" . }}
+Backend health: https://{{ include "insur-iq.domain" . }}/service-api/api/health/
+Auth health:    https://{{ include "insur-iq.domain" . }}/auth/api/auth/ok
+
+Verify rollout:
+  kubectl rollout status deploy/{{ include "insur-iq.fullname" . }}-backend -n {{ .Release.Namespace }}
+  kubectl rollout status deploy/{{ include "insur-iq.fullname" . }}-web     -n {{ .Release.Namespace }}
+  kubectl rollout status deploy/{{ include "insur-iq.fullname" . }}-auth    -n {{ .Release.Namespace }}
+
+Rollback (if needed):
+  helm history {{ .Release.Name }} -n {{ .Release.Namespace }}
+  helm rollback {{ .Release.Name }} <REV> -n {{ .Release.Namespace }}

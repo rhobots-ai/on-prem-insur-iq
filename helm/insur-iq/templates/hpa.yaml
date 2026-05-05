@@ -1,0 +1,26 @@
+{{- range $name, $cfg := .Values.autoscaling }}
+{{- if $cfg.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "insur-iq.fullname" $ }}-{{ kebabcase $name }}
+  labels:
+    {{- include "insur-iq.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ kebabcase $name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "insur-iq.fullname" $ }}-{{ kebabcase $name }}
+  minReplicas: {{ $cfg.minReplicas }}
+  maxReplicas: {{ $cfg.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $cfg.targetCPU }}
+{{- end }}
+{{- end }}

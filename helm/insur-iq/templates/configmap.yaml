@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "insur-iq.configMapName" . }}
+  labels:
+    {{- include "insur-iq.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
+data:
+  DEBUG: {{ .Values.config.DEBUG | quote }}
+  APP_ENV: {{ .Values.config.APP_ENV | quote }}
+  AWS_REGION: {{ default .Values.global.awsRegion .Values.config.AWS_REGION | quote }}
+  AWS_STORAGE_BUCKET_NAME: {{ required "config.AWS_STORAGE_BUCKET_NAME is required" .Values.config.AWS_STORAGE_BUCKET_NAME | quote }}
+  AWS_S3_ENDPOINT_URL: {{ .Values.config.AWS_S3_ENDPOINT_URL | quote }}
+  AWS_S3_PUBLIC_ENDPOINT_URL: {{ .Values.config.AWS_S3_PUBLIC_ENDPOINT_URL | quote }}
+  AWS_SENDER_EMAIL: {{ .Values.config.AWS_SENDER_EMAIL | quote }}
+  CELERY_RESULT_BACKEND: {{ .Values.config.CELERY_RESULT_BACKEND | quote }}
+  CELERY_CACHE_BACKEND: {{ .Values.config.CELERY_CACHE_BACKEND | quote }}
+  EXCEL_AI_CLASSIFICATION_ENABLED: {{ .Values.config.EXCEL_AI_CLASSIFICATION_ENABLED | quote }}
+  LANGFUSE_HOST: {{ .Values.config.LANGFUSE_HOST | quote }}
+  MINERVA_API_URL: {{ .Values.config.MINERVA_API_URL | quote }}
+  POLICY_EXTRACT_CALLBACK_URL: {{ default (printf "%s/service-api/policy-extract/callback/" (include "insur-iq.publicUrl" .)) .Values.config.POLICY_EXTRACT_CALLBACK_URL | quote }}

@@ -1,0 +1,26 @@
+{{- range $name, $cfg := .Values.podDisruptionBudget }}
+{{- if $cfg.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "insur-iq.fullname" $ }}-{{ kebabcase $name }}
+  labels:
+    {{- include "insur-iq.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ kebabcase $name }}
+spec:
+  minAvailable: {{ $cfg.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "insur-iq.selectorLabels" $ | nindent 6 }}
+      {{- if eq $name "celeryDefault" }}
+      app.kubernetes.io/component: celery-default
+      {{- else if eq $name "policyExtract" }}
+      app.kubernetes.io/component: celery-policy-extract
+      {{- else if eq $name "commissionIntake" }}
+      app.kubernetes.io/component: celery-commission-intake
+      {{- else }}
+      app.kubernetes.io/component: {{ $name }}
+      {{- end }}
+{{- end }}
+{{- end }}

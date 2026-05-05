@@ -1,0 +1,72 @@
+{{- /* Celery worker deployments — one Deployment per queue class. */ -}}
+{{- range $name, $cfg := .Values.celery }}
+{{- if and (kindIs "map" $cfg) (hasKey $cfg "queues") (ne $name "beat") (or (not (hasKey $cfg "enabled")) $cfg.enabled) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "insur-iq.fullname" $ }}-celery-{{ kebabcase $name }}
+  labels:
+    {{- include "insur-iq.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: celery-{{ kebabcase $name }}
+spec:
+  replicas: {{ $cfg.replicas }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      {{- include "insur-iq.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: celery-{{ kebabcase $name }}
+  template:
+    metadata:
+      labels:
+        {{- include "insur-iq.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: celery-{{ kebabcase $name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- with $.Values.celery.podAnnotations }}{{ toYaml . | nindent 8 }}{{- end }}
+    spec:
+      serviceAccountName: {{ include "insur-iq.sa.celery" $ }}
+      securityContext:
+        {{- include "insur-iq.podSecurityContext" $ | nindent 8 }}
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $cfg.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: worker
+          image: {{ include "insur-iq.image.backend" $ }}
+          imagePullPolicy: {{ $.Values.image.backend.pullPolicy }}
+          command:
+            - celery
+            - -A
+            - config
+            - worker
+            - --loglevel=INFO
+            - --queues={{ $cfg.queues }}
+            - --concurrency={{ $cfg.concurrency }}
+            - --hostname={{ kebabcase $name }}@%h
+          envFrom:
+            {{- include "insur-iq.backendEnvFrom" $ | nindent 12 }}
+          env:
+            {{- include "insur-iq.backendDerivedEnv" $ | nindent 12 }}
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pgrep -f 'celery.*worker' > /dev/null"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources: {{ toYaml $cfg.resources | nindent 12 }}
+          securityContext:
+            {{- include "insur-iq.containerSecurityContext" $ | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 2Gi
+{{- end }}
+{{- end }}

@@ -1,0 +1,50 @@
+{{- if .Values.migrate.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "insur-iq.fullname" . }}-migrate
+  labels:
+    {{- include "insur-iq.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrate.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrate.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "insur-iq.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "insur-iq.sa.celery" . }}
+      securityContext:
+        {{- include "insur-iq.podSecurityContext" . | nindent 8 }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        {{- include "insur-iq.waitForSecret" . | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "insur-iq.image.backend" . }}
+          imagePullPolicy: {{ .Values.image.backend.pullPolicy }}
+          command: {{ toJson .Values.migrate.command }}
+          envFrom:
+            {{- include "insur-iq.backendEnvFrom" . | nindent 12 }}
+          env:
+            {{- include "insur-iq.backendDerivedEnv" . | nindent 12 }}
+          resources: {{ toYaml .Values.migrate.resources | nindent 12 }}
+          securityContext:
+            {{- include "insur-iq.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+{{- end }}

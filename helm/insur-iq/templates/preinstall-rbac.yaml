@@ -1,0 +1,41 @@
+{{- if .Values.serviceAccount.create -}}
+# Minimal RBAC for pre-install Jobs (auth-db-init, migrate) to poll for the
+# `db` Secret produced by ESO. ESO reconciles ExternalSecret → Secret in a few
+# seconds; the Jobs' init containers wait until the Secret exists before
+# starting the main container.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "insur-iq.fullname" . }}-preinstall
+  labels:
+    {{- include "insur-iq.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames:
+      - {{ include "insur-iq.secretName.db" . }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "insur-iq.fullname" . }}-preinstall
+  labels:
+    {{- include "insur-iq.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "insur-iq.fullname" . }}-preinstall
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "insur-iq.sa.celery" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

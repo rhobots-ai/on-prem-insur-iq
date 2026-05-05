@@ -1,0 +1,31 @@
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Helm — local, environment-specific values
+helm/**/my-values.yaml
+
+# Secret seeding — local env file
+scripts/seed-secrets.env
+
+# Deployment shell vars — local env file (operator-specific, repo root)
+deploy.env
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~

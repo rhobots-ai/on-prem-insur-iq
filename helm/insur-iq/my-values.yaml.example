@@ -1,0 +1,87 @@
+# =============================================================================
+# insur-iq — operator override template
+# =============================================================================
+# Copy this file to my-values.yaml, fill in REPLACE_* markers, and run:
+#   helm install insur-iq ./docs/deployment/chart \
+#     -n insur-iq -f my-values.yaml --atomic --timeout 10m
+#
+# Anything not set here inherits from values.yaml (the defaults contract).
+# =============================================================================
+
+global:
+  awsAccountId: "REPLACE_AWS_ACCOUNT_ID"
+  awsRegion: ap-south-1
+  domain: REPLACE_PUBLIC_HOSTNAME      # e.g. insuriq.acmecorp.com
+  env: prod                            # prod | staging | dev — also drives SM secret paths
+
+image:
+  backend: { tag: "REPLACE_GIT_SHA" }
+  web:     { tag: "REPLACE_GIT_SHA" }
+  auth:    { tag: "v1.0.0" }           # pin in prod; defaults to "latest"
+
+# Pod Identity associations are configured by Terraform on the cluster.
+# Leave the role ARNs blank unless you need to override.
+serviceAccount:
+  podIdentityAssociations:
+    backendRoleArn: ""
+    celeryRoleArn: ""
+
+externalSecrets:
+  enabled: true
+  refreshInterval: 1h
+  remoteRefs:
+    backend: insur-iq/prod/backend
+    db:      insur-iq/prod/db
+    redis:   insur-iq/prod/redis
+    auth:    insur-iq/prod/auth
+    llm:     insur-iq/prod/llm
+
+config:
+  AWS_STORAGE_BUCKET_NAME: REPLACE_S3_BUCKET_NAME
+  AWS_SENDER_EMAIL: REPLACE_SENDER_EMAIL  # e.g. no-reply@acmecorp.com (SES verified)
+  # LLM_PROVIDER lives in the `llm` Secret (set in scripts/seed-secrets.env), not here.
+  LANGFUSE_HOST: https://cloud.langfuse.com
+
+# Workload sizing — tune for HA and load. Drop replicas to 1 for minimal/dev.
+backend: { replicas: 2 }
+web:     { replicas: 2 }
+auth:    { replicas: 2 }
+celery:
+  default:           { replicas: 4 }
+  policyExtract:     { replicas: 4 }
+  commissionIntake:  { replicas: 2 }
+  beat:              { enabled: true }
+
+autoscaling:
+  backend: { enabled: true, minReplicas: 2, maxReplicas: 10, targetCPU: 70 }
+  web:     { enabled: true, minReplicas: 2, maxReplicas: 6,  targetCPU: 70 }
+  auth:    { enabled: true, minReplicas: 2, maxReplicas: 4,  targetCPU: 70 }
+
+podDisruptionBudget:
+  backend:          { enabled: true, minAvailable: 1 }
+  web:              { enabled: true, minAvailable: 1 }
+  auth:             { enabled: true, minAvailable: 1 }
+  celeryDefault:    { enabled: true, minAvailable: 1 }
+  policyExtract:    { enabled: true, minAvailable: 1 }
+  commissionIntake: { enabled: false }
+
+ingress:
+  certificateArn: REPLACE_ACM_CERT_ARN
+  scheme: internet-facing
+  idleTimeoutSeconds: 300
+  # Lock down /service-api/admin/* to corp/VPN CIDRs. Empty list = deny all.
+  adminCidrAllowlist:
+    - "REPLACE_CORP_CIDR"               # e.g. "10.0.0.0/8"
+
+networkPolicy:
+  enabled: true
+  allowedEgress:
+    rdsCidrs:   ["REPLACE_RDS_SUBNET_CIDR_A", "REPLACE_RDS_SUBNET_CIDR_B"]
+    redisCidrs: ["REPLACE_REDIS_SUBNET_CIDR_A", "REPLACE_REDIS_SUBNET_CIDR_B"]
+
+topologySpread:
+  enabled: true
+
+# Optional: enable OAuth providers in the web SSO list.
+# web:
+#   enabledSocialProviders: "google,github,microsoft"

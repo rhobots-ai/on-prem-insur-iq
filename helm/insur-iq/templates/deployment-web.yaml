@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "insur-iq.fullname" . }}-web
+  labels:
+    {{- include "insur-iq.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  {{- if not .Values.autoscaling.web.enabled }}
+  replicas: {{ .Values.web.replicas }}
+  {{- end }}
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "insur-iq.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      labels:
+        {{- include "insur-iq.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: web
+      annotations:
+        {{- toYaml .Values.web.podAnnotations | nindent 8 }}
+    spec:
+      securityContext:
+        {{- include "insur-iq.podSecurityContext" . | nindent 8 }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      topologySpreadConstraints:
+        {{- include "insur-iq.topologySpread" . | nindent 8 }}
+      containers:
+        - name: web
+          image: {{ include "insur-iq.image.web" . }}
+          imagePullPolicy: {{ .Values.image.web.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.web.containerPort }}
+              protocol: TCP
+          env:
+            {{- include "insur-iq.webEnv" . | nindent 12 }}
+            {{- with .Values.web.extraEnv }}{{ toYaml . | nindent 12 }}{{- end }}
+          livenessProbe: {{ toYaml .Values.web.livenessProbe | nindent 12 }}
+          readinessProbe: {{ toYaml .Values.web.readinessProbe | nindent 12 }}
+          resources: {{ toYaml .Values.web.resources | nindent 12 }}
+          securityContext:
+            {{- include "insur-iq.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
