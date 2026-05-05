@@ -136,7 +136,7 @@ config:
 # Per-workload sections
 # -----------------------------------------------------------------------------
 backend:
-  replicas: 2
+  replicas: 1
   containerPort: 8000
   command:
     - gunicorn
@@ -182,7 +182,7 @@ backend:
   extraEnv: []
 
 web:
-  replicas: 2
+  replicas: 1
   containerPort: 3000
   resources:
     requests: { cpu: 100m, memory: 256Mi }
@@ -214,7 +214,7 @@ web:
   extraEnv: []
 
 auth:
-  replicas: 2
+  replicas: 1
   containerPort: 10000   # nginx sidecar — ALB target port
   appPort: 10001         # auth app internal port (nginx proxies to this)
   command: ["start"]
@@ -256,14 +256,14 @@ celery:
     instrumentation.opentelemetry.io/inject-java: "false"
     instrumentation.opentelemetry.io/inject-dotnet: "false"
   default:
-    replicas: 2
+    replicas: 1
     concurrency: 4
     queues: default
     resources:
       requests: { cpu: 200m, memory: 512Mi }
       limits:   { cpu: 1000m, memory: 1Gi }
   policyExtract:
-    replicas: 2
+    replicas: 1
     concurrency: 10
     queues: policy_extract
     resources:
@@ -336,9 +336,9 @@ ingress:
 # fixed `replicas`; resize via the `celery.<queue>.replicas` keys above.
 # -----------------------------------------------------------------------------
 autoscaling:
-  backend:        { enabled: true, minReplicas: 2, maxReplicas: 10, targetCPU: 70 }
-  web:            { enabled: true, minReplicas: 2, maxReplicas: 6,  targetCPU: 70 }
-  auth:           { enabled: true, minReplicas: 2, maxReplicas: 4,  targetCPU: 70 }
+  backend:        { enabled: true, minReplicas: 1, maxReplicas: 4, targetCPU: 70 }
+  web:            { enabled: true, minReplicas: 1, maxReplicas: 2,  targetCPU: 70 }
+  auth:           { enabled: true, minReplicas: 1, maxReplicas: 2,  targetCPU: 70 }
 
 # -----------------------------------------------------------------------------
 # PodDisruptionBudgets

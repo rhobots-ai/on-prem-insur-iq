@@ -1,5 +1,5 @@
 ################################################################################
-# VPC — 3 AZs, public + private subnets, NAT/AZ, S3 gateway endpoint.
+# VPC — 3 AZs, public + private subnets, single NAT gateway, S3 gateway endpoint.
 ################################################################################
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -14,7 +14,7 @@ module "vpc" {
   database_subnets = [for i, _ in var.azs : cidrsubnet(var.vpc_cidr, 4, i + 8)]
 
   enable_nat_gateway   = true
-  single_nat_gateway   = false
+  single_nat_gateway   = true
   enable_dns_hostnames = true
 
   public_subnet_tags  = { "kubernetes.io/role/elb"           = "1" }
