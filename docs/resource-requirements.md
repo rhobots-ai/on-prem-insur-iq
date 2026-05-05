@@ -27,7 +27,7 @@
 
 ---
 
-## RDS — PostgreSQL 16
+## RDS — PostgreSQL 17
 
 | Parameter | Value |
 | --- | --- |
