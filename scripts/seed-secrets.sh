@@ -122,7 +122,9 @@ DB_PASSWORD=$(aws secretsmanager get-secret-value \
 [ -n "$DB_PASSWORD" ] || err "RDS master secret has no .password field"
 
 # ── Compute derived values ────────────────────────────────────────────────────
-DATABASE_STRING_AUTH="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME_AUTH}?sslmode=require"
+# URL-encode the password so special chars (: @ # etc.) don't break the DSN parser.
+DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$DB_PASSWORD")
+DATABASE_STRING_AUTH="postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@${DB_HOST}:${DB_PORT}/${DB_NAME_AUTH}?sslmode=require"
 CELERY_BROKER_URL="redis://${REDIS_ENDPOINT%:*}:${REDIS_ENDPOINT##*:}/${REDIS_DB_INDEX}"
 # If REDIS_ENDPOINT lacks a port (shouldn't, but be defensive), %:* leaves the
 # whole string and ##*: gives the same — fall back to 6379.

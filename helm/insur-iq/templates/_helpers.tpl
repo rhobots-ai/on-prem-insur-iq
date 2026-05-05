@@ -169,7 +169,7 @@ envFrom block for auth.
 - name: BETTER_AUTH_URL
   value: {{ default (printf "%s/auth" (include "insur-iq.publicUrl" .)) .Values.auth.betterAuthUrl | quote }}
 - name: WEBHOOK_EP
-  value: {{ default (printf "http://%s-backend:%v/api/auth/webhook/" (include "insur-iq.fullname" .) .Values.backend.containerPort) .Values.auth.webhookEndpoint | quote }}
+  value: {{ default (printf "http://%s-backend:%v/service-api/api/auth/webhook/" (include "insur-iq.fullname" .) .Values.backend.containerPort) .Values.auth.webhookEndpoint | quote }}
 - name: TRUSTED_ORIGINS
   value: {{ default (include "insur-iq.publicUrl" .) .Values.auth.trustedOrigins | quote }}
 - name: REQUIRE_EMAIL_VERIFICATION

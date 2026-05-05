@@ -656,7 +656,7 @@ Create a Route53 ALIAS A-record pointing `insuriq.acmecorp.com` at that ALB. (If
 ### Smoke tests
 
 ```bash
-curl -fsS https://insuriq.acmecorp.com/service-api/api/health/   # → {"status":"ok"}
+curl -fsS https://{insuriq.acmecorp.com}/service-api/api/health/   # → {"status":"ok"}
 curl -fsS https://insuriq.acmecorp.com/auth/api/auth/ok          # → {"ok":true}
 curl -fsS https://insuriq.acmecorp.com/ -o /dev/null -w '%{http_code}\n'  # → 200
 ```
