@@ -4,9 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-This is **deployment-only**: Terraform + a Helm chart + operator scripts to run the insur-iq application stack on a customer-managed AWS account (EKS). The application source code (backend Django, web Nuxt, auth, celery workers) lives in **separate repos** — this repo only ships its container images and the infrastructure they run on. Do not look here for app code.
+This is **deployment-only**: Terraform + a Helm chart + operator scripts to run the insur-iq application stack on a customer-managed AWS account. The application source code (backend Django, web Nuxt, auth, celery workers) lives in **separate repos** — this repo only ships its container images and the infrastructure they run on. Do not look here for app code.
 
-The canonical end-to-end runbook is [eks-deployment-guide.md](eks-deployment-guide.md). When in doubt about a deployment step, check there before reasoning from first principles — it documents the chosen sequence and the why behind non-obvious decisions (Appendix D — Decision Log).
+**Two deployment paths** ship the same images:
+- **EKS (default)** — `infra/terraform/` + `helm/insur-iq/`; runbook [docs/eks-deployment-guide.md](docs/eks-deployment-guide.md). Most of this file describes this path.
+- **EC2 / Docker Compose** — `infra/terraform-ec2/` (ALB + app EC2 + GPU EC2 + RDS + S3) + `deploy/ec2/` (compose, nginx, `.env` templates); runbook [docs/ec2-deployment-guide.md](docs/ec2-deployment-guide.md). Simpler topology: nginx routes on the app box (not the ALB), Redis is a container (not ElastiCache), DB is direct (no Proxy), secrets are `.env` files (no ESO), identity is one EC2 instance profile (not Pod Identity), Rhobots Extract OCR on a separate GPU box. See that guide's Appendix C for the why.
+
+The canonical end-to-end runbook is [eks-deployment-guide.md](docs/eks-deployment-guide.md). When in doubt about a deployment step, check there before reasoning from first principles — it documents the chosen sequence and the why behind non-obvious decisions (Appendix D — Decision Log).
 
 ## Common commands
 

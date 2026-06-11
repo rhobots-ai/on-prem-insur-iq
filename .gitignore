@@ -20,8 +20,15 @@ helm/**/my-values.yaml
 # Secret seeding — local env file
 scripts/seed-secrets.env
 
+# EC2 deploy — local env files (DB password, auth + LLM keys)
+deploy/ec2/*.env
+!deploy/ec2/*.env.example
+
 # Deployment shell vars — local env file (operator-specific, repo root)
 deploy.env
+
+# Python — per-workspace docs venv (Conductor setup script)
+.venv/
 
 # Editor / OS
 .DS_Store

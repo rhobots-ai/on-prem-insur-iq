@@ -1,0 +1,23 @@
+# Rhobots Extract GPU OCR service — runs on the dedicated GPU EC2 box (g5.2xlarge, A10G).
+# Exposes the parser on :8000; the policy_extract celery worker on the app box
+# reaches it via MINERVA_API_URL (the GPU box private IP).
+#
+#   docker compose -f docker-compose.gpu.yml --env-file gpu.env up -d
+#
+# Requires the NVIDIA Container Toolkit (installed by cloud-init/gpu.sh). Verify
+# the GPU is visible first: `docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi`
+
+services:
+  rhobots-extract:
+    image: ${RHOBOTS_EXTRACT_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "8000:8000"        # reachable only from the app box SG (port 8000)
+    env_file: gpu.env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: ["gpu"]
