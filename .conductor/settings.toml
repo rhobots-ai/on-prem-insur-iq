@@ -1,0 +1,25 @@
+#:schema https://conductor.build/schemas/settings.repo.schema.json
+
+# Shared Conductor config for on-prem-insur-iq.
+# This repo is deployment-only (Terraform + Helm + mkdocs docs). The only
+# long-running, workspace-safe "app" is the mkdocs documentation site, so that
+# is what the Run button serves. Terraform/Helm are intentionally NOT wired to
+# Run — they touch cloud resources and shared remote state, which is not safe to
+# trigger automatically per workspace.
+
+[scripts]
+# Isolated per-workspace venv → no cross-workspace version bleed, no writes to
+# any global/system Python. Installs the docs toolchain (mkdocs-material →
+# pulls in mkdocs). The .venv lives in the worktree and is gitignored.
+setup = "python3 -m venv .venv && .venv/bin/pip install -r docs/requirements.txt"
+
+# Serve the docs with live reload on this workspace's allocated port, from the
+# workspace venv.
+run = ".venv/bin/mkdocs serve --dev-addr 127.0.0.1:$CONDUCTOR_PORT"
+
+# Remove the gitignored generated site dir on archive (non-destructive).
+archive = "rm -rf site"
+
+# Each workspace serves on its own CONDUCTOR_PORT with no shared local resource,
+# so multiple workspaces can run at once.
+run_mode = "concurrent"

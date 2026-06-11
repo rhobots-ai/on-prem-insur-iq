@@ -1,0 +1,196 @@
+# insur-iq application stack — runs on the app EC2 box, behind an ALB.
+# Mirrors the prod compose, with prebuilt ECR images instead of local builds and
+# Rhobots Extract split onto the GPU box (MINERVA_API_URL → GPU box private IP).
+# Config comes from app.env (copy app.env.example → app.env, never commit it).
+#
+#   docker compose -f docker-compose.app.yml --env-file app.env up -d
+#
+# Variables below interpolate from app.env (the `${VAR}` form), exactly like the
+# prod compose. The backend image's ./entrypoint.sh dispatches by mode arg.
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+    ports:
+      - "80:80"                       # ALB → nginx (TLS terminates at the ALB)
+    volumes:
+      - ./nginx/insur-iq.conf:/etc/nginx/conf.d/default.conf:ro
+      - operator-static:/app/static:ro
+    depends_on:
+      - auth
+      - backend
+      - web
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  auth:
+    image: rhobotsai/auth:${AUTH_TAG:-latest}
+    command: ["start"]
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: "10000"
+      BASE_DOMAIN: ${DOMAIN}
+      BETTER_AUTH_URL: https://${DOMAIN}/auth
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      TRUSTED_ORIGINS: https://${DOMAIN}
+      DATABASE_STRING: postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME_AUTH}
+      REQUIRE_EMAIL_VERIFICATION: ${REQUIRE_EMAIL_VERIFICATION:-false}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+      AWS_REGION: ${AWS_REGION}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME}
+      AWS_SENDER_EMAIL: ${AWS_SENDER_EMAIL:-}
+      WEBHOOK_SECRET_KEY: ${WEBHOOK_SECRET_KEY}
+      WEBHOOK_EP: http://backend:8000/api/auth/webhook/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/api/auth/ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  backend:
+    image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
+    command: ["bash", "./entrypoint.sh", "prod"]
+    restart: always
+    volumes:
+      - operator-static:/app/static
+    environment: &backend-env
+      DEBUG: ${DEBUG:-False}
+      APP_ENV: ${APP_ENV:-PROD}
+      SECRET_KEY: ${SECRET_KEY}
+      WEBHOOK_SECRET_KEY: ${WEBHOOK_SECRET_KEY}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
+      HOST_NAME: ${HOST_NAME}
+      BETTER_AUTH_URL: http://auth:10000
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      AWS_REGION: ${AWS_REGION}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME}
+      AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-}
+      AWS_S3_PUBLIC_ENDPOINT_URL: ${AWS_S3_PUBLIC_ENDPOINT_URL:-}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-django-db}
+      CELERY_CACHE_BACKEND: ${CELERY_CACHE_BACKEND:-django-cache}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      MINERVA_API_URL: ${MINERVA_API_URL}
+      POLICY_EXTRACT_CALLBACK_URL: ${POLICY_EXTRACT_CALLBACK_URL:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      EXCEL_AI_CLASSIFICATION_ENABLED: ${EXCEL_AI_CLASSIFICATION_ENABLED:-true}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ---- Celery workers — entrypoint.sh dispatches the queue by mode arg -------
+  celery:
+    image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
+    command: ["bash", "./entrypoint.sh", "celery"]
+    restart: always
+    environment: *backend-env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  celery_policy_extract:
+    image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
+    # Calls Rhobots Extract on the GPU box (MINERVA_API_URL), then the LLM.
+    command: ["bash", "./entrypoint.sh", "celery-policy-extract"]
+    restart: always
+    environment: *backend-env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  celery_commission_intake:
+    image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
+    command: ["bash", "./entrypoint.sh", "celery-commission-intake"]
+    restart: always
+    environment: *backend-env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  beat:
+    image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
+    # Singleton — never run more than one.
+    command: ["bash", "./entrypoint.sh", "beat"]
+    restart: always
+    environment: *backend-env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  web:
+    # NUXT_PUBLIC_* URLs are baked into this image at BUILD time (build args in
+    # the source repo's web/Dockerfile), NOT read at runtime. CI must build the
+    # web image for this domain: NUXT_PUBLIC_API_BASE_URL=<domain>/service-api,
+    # NUXT_PUBLIC_AUTH_BASE_URL=https://<domain>/auth/api/auth,
+    # NUXT_PUBLIC_APP_BASE_URL=https://<domain>, NUXT_PUBLIC_API_SCHEME=https.
+    image: ${ECR_REGISTRY}/insur-iq/web:${WEB_TAG}
+    restart: always
+    depends_on:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ---- One-shot: ensure the `auth` logical DB exists on RDS ------------------
+  # Django migrations run inside `entrypoint.sh prod` on first boot. Better Auth
+  # migrates its own schema on boot, but the `auth` DATABASE must exist first.
+  # Run once before the first `up`:
+  #   docker compose -f docker-compose.app.yml --env-file app.env run --rm authdb
+  authdb:
+    image: postgres:16-alpine
+    profiles: ["tools"]
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        psql -h "${DB_HOST}" -p "${DB_PORT:-5432}" -U "${DB_USER}" -d "${DB_NAME}" -tc \
+          "SELECT 1 FROM pg_database WHERE datname='${DB_NAME_AUTH}'" | grep -q 1 \
+          || psql -h "${DB_HOST}" -p "${DB_PORT:-5432}" -U "${DB_USER}" -d "${DB_NAME}" \
+               -c "CREATE DATABASE ${DB_NAME_AUTH}"
+
+networks:
+  default:
+    name: insure_iq_network
+
+volumes:
+  operator-static:
+    driver: local

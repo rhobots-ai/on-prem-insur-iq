@@ -1,5 +1,5 @@
 site_name: insur-iq Deployment Docs
-site_description: Deployment guide for running insur-iq on a customer-managed AWS EKS cluster
+site_description: Deployment guides for running insur-iq on a customer-managed AWS account (EKS or EC2)
 repo_url: https://github.com/rhobots-ai/on-prem-insur-iq
 repo_name: rhobots-ai/on-prem-insur-iq
 docs_dir: docs
@@ -41,7 +41,8 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Deployment Guide: eks-deployment-guide.md
+  - EKS Deployment Guide: eks-deployment-guide.md
+  - EC2 Deployment Guide: ec2-deployment-guide.md
   - Infrastructure:
       - Overview: infra/terraform.md
       - Resource Requirements: resource-requirements.md
