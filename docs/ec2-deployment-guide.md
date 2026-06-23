@@ -320,9 +320,11 @@ The backend image's `entrypoint.sh prod` mode runs Django migrations and
 `/service-api/static/`) on boot. Better Auth runs its own schema migrations on
 first boot against the `auth` DB.
 
-> **Web image is built per-domain.** The Nuxt `NUXT_PUBLIC_*` URLs are baked at
-> **build** time (build args), not read at runtime — CI must build
-> `insur-iq/web` with `NUXT_PUBLIC_API_BASE_URL=<domain>/service-api`,
+> **One generic web image.** The Nuxt `NUXT_PUBLIC_*` URLs are read at **runtime**
+> by the SSR server (Nuxt 3 `runtimeConfig` env override), so a single `insur-iq/web`
+> image serves any domain — no per-domain CI build. The `web` service in
+> `docker-compose.app.yml` derives them from `${DOMAIN}`:
+> `NUXT_PUBLIC_API_BASE_URL=<domain>/service-api`,
 > `NUXT_PUBLIC_AUTH_BASE_URL=https://<domain>/auth/api/auth`,
 > `NUXT_PUBLIC_APP_BASE_URL=https://<domain>`, `NUXT_PUBLIC_API_SCHEME=https`.
 
@@ -437,9 +439,11 @@ and [`deploy/ec2/gpu.env.example`](../deploy/ec2/gpu.env.example).
 | `REQUIRE_EMAIL_VERIFICATION`, `*_CLIENT_ID/SECRET`, `AWS_SENDER_EMAIL` | app | Auth OAuth providers + transactional email |
 | `LLM_PROVIDER`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL` | app | Extraction LLM (`GOOGLE_API_KEY` = the Gemini key the backend reads) |
 | `RHOBOTS_EXTRACT_IMAGE`, `RHOBOTS_EXTRACT_PORT` | gpu | Rhobots Extract container image + port |
+| `NUXT_PUBLIC_*`, `NUXT_APP_BASE_URL` | app | Nuxt SSR runtime config; URLs derive from `DOMAIN` in the `web` service. Optional overrides: `NUXT_PUBLIC_API_SCHEME` (default `https`), `NUXT_PUBLIC_ENABLED_SOCIAL_PROVIDERS`, `NUXT_APP_BASE_URL` (default `/`) |
 
-> The Nuxt `NUXT_PUBLIC_*` URLs are **not** in `app.env` — they are baked into
-> the `web` image at build time (see §9).
+> The Nuxt `NUXT_PUBLIC_*` URLs are injected at **runtime** by the `web` service
+> in `docker-compose.app.yml`, derived from `DOMAIN` (see §9). Only the optional
+> overrides above belong in `app.env`.
 
 ---
 
