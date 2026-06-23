@@ -102,6 +102,13 @@ secrets:
     GEMINI_API_KEY: ""
     GEMINI_MODEL: gemini-2.5-flash
     POLICY_EXTRACT_GEMINI_MODEL: gemini-2.5-flash-lite
+    # Vertex AI (optional) — blank GOOGLE_GENAI_USE_VERTEXAI = public Gemini API.
+    # GOOGLE_APPLICATION_CREDENTIALS is a path to a SA keyfile that must exist in
+    # the pod (mount via a secret volume, or use Workload Identity / ADC).
+    GOOGLE_GENAI_USE_VERTEXAI: ""
+    GOOGLE_CLOUD_PROJECT: ""
+    GOOGLE_CLOUD_LOCATION: ""
+    GOOGLE_APPLICATION_CREDENTIALS: ""
     OPENAI_API_KEY: ""
     OPENAI_MODEL: gpt-4o-mini
     ANTHROPIC_API_KEY: ""

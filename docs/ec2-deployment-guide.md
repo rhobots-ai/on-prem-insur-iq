@@ -445,6 +445,7 @@ and [`deploy/ec2/gpu.env.example`](../deploy/ec2/gpu.env.example).
 | `BETTER_AUTH_SECRET` | app | Better Auth signing secret; auth's `DATABASE_STRING` is composed from `DB_*` + `DB_NAME_AUTH` |
 | `REQUIRE_EMAIL_VERIFICATION`, `*_CLIENT_ID/SECRET`, `AWS_SENDER_EMAIL` | app | Auth OAuth providers + transactional email |
 | `LLM_PROVIDER`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `POLICY_EXTRACT_GEMINI_MODEL` | app | Extraction LLM (`GOOGLE_API_KEY` = the Gemini key the backend reads) |
+| `GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `GOOGLE_APPLICATION_CREDENTIALS` | app | Vertex AI (optional). Blank `GOOGLE_GENAI_USE_VERTEXAI` = public Gemini API. `GOOGLE_APPLICATION_CREDENTIALS` is a **path** to a service-account JSON keyfile that must exist in the container — mount it yourself or rely on ADC/WIF; blank = Application Default Credentials |
 | `RHOBOTS_EXTRACT_IMAGE`, `RHOBOTS_EXTRACT_PORT` | gpu | Rhobots Extract container image + port |
 | `NUXT_PUBLIC_*`, `NUXT_APP_BASE_URL` | app | Nuxt SSR runtime config; URLs derive from `DOMAIN` in the `web` service. Optional overrides: `NUXT_PUBLIC_API_SCHEME` (default `https`), `NUXT_PUBLIC_ENABLED_SOCIAL_PROVIDERS`, `NUXT_APP_BASE_URL` (default `/`) |
 
