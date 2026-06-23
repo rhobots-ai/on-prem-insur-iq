@@ -58,5 +58,6 @@ output "app_env_snippet" {
     GOOGLE_API_KEY=__FILL__
     GEMINI_API_KEY=__FILL__
     GEMINI_MODEL=gemini-2.5-flash
+    POLICY_EXTRACT_GEMINI_MODEL=gemini-2.5-flash-lite
   EOT
 }
