@@ -82,11 +82,20 @@ services:
       AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME}
       AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-}
       AWS_S3_PUBLIC_ENDPOINT_URL: ${AWS_S3_PUBLIC_ENDPOINT_URL:-}
+      AWS_S3_ADDRESSING_STYLE: ${AWS_S3_ADDRESSING_STYLE:-virtual}
+      AWS_S3_SIGNATURE_VERSION: ${AWS_S3_SIGNATURE_VERSION:-s3v4}
+      AWS_QUERYSTRING_EXPIRE: ${AWS_QUERYSTRING_EXPIRE:-3600}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-django-db}
       CELERY_CACHE_BACKEND: ${CELERY_CACHE_BACKEND:-django-cache}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       MINERVA_API_URL: ${MINERVA_API_URL}
+      MINERVA_TIMEOUT_SECONDS: ${MINERVA_TIMEOUT_SECONDS:-300}
+      PIPELINES_MAX_PAGES: ${PIPELINES_MAX_PAGES:-50}
+      MINERU_CHUNK_PAGES: ${MINERU_CHUNK_PAGES:-50}
+      MINERU_MAX_WORKERS: ${MINERU_MAX_WORKERS:-4}
+      MINERU_CHUNK_TIMEOUT: ${MINERU_CHUNK_TIMEOUT:-600}
+      CINS_SHEET_CONCURRENCY: ${CINS_SHEET_CONCURRENCY:-4}
       POLICY_EXTRACT_CALLBACK_URL: ${POLICY_EXTRACT_CALLBACK_URL:-}
       LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -148,13 +157,19 @@ services:
         condition: service_healthy
 
   web:
-    # NUXT_PUBLIC_* URLs are baked into this image at BUILD time (build args in
-    # the source repo's web/Dockerfile), NOT read at runtime. CI must build the
-    # web image for this domain: NUXT_PUBLIC_API_BASE_URL=<domain>/service-api,
-    # NUXT_PUBLIC_AUTH_BASE_URL=https://<domain>/auth/api/auth,
-    # NUXT_PUBLIC_APP_BASE_URL=https://<domain>, NUXT_PUBLIC_API_SCHEME=https.
+    # NUXT_PUBLIC_* URLs are read at RUNTIME by the Nuxt SSR server (Nuxt 3
+    # runtimeConfig env override) — one generic image serves any domain. Derived
+    # from ${DOMAIN} below, same as the auth service. No per-domain build needed.
     image: ${ECR_REGISTRY}/insur-iq/web:${WEB_TAG}
     restart: always
+    environment:
+      NODE_ENV: production
+      NUXT_PUBLIC_API_BASE_URL: ${DOMAIN}/service-api
+      NUXT_PUBLIC_AUTH_BASE_URL: https://${DOMAIN}/auth/api/auth
+      NUXT_PUBLIC_APP_BASE_URL: https://${DOMAIN}
+      NUXT_PUBLIC_API_SCHEME: ${NUXT_PUBLIC_API_SCHEME:-https}
+      NUXT_PUBLIC_ENABLED_SOCIAL_PROVIDERS: ${NUXT_PUBLIC_ENABLED_SOCIAL_PROVIDERS:-}
+      NUXT_APP_BASE_URL: ${NUXT_APP_BASE_URL:-/}
     depends_on:
       - backend
 
