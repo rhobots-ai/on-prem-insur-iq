@@ -115,9 +115,6 @@ services:
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
       EXCEL_AI_CLASSIFICATION_ENABLED: ${EXCEL_AI_CLASSIFICATION_ENABLED:-true}
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
       interval: 30s
@@ -130,9 +127,6 @@ services:
     command: ["bash", "./entrypoint.sh", "celery"]
     restart: always
     environment: *backend-env
-    depends_on:
-      redis:
-        condition: service_healthy
 
   celery_policy_extract:
     image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
@@ -140,18 +134,12 @@ services:
     command: ["bash", "./entrypoint.sh", "celery-policy-extract"]
     restart: always
     environment: *backend-env
-    depends_on:
-      redis:
-        condition: service_healthy
 
   celery_commission_intake:
     image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
     command: ["bash", "./entrypoint.sh", "celery-commission-intake"]
     restart: always
     environment: *backend-env
-    depends_on:
-      redis:
-        condition: service_healthy
 
   beat:
     image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
@@ -159,9 +147,6 @@ services:
     command: ["bash", "./entrypoint.sh", "beat"]
     restart: always
     environment: *backend-env
-    depends_on:
-      redis:
-        condition: service_healthy
 
   web:
     # NUXT_PUBLIC_* URLs are read at RUNTIME by the Nuxt SSR server (Nuxt 3
@@ -179,35 +164,6 @@ services:
       NUXT_APP_BASE_URL: ${NUXT_APP_BASE_URL:-/}
     depends_on:
       - backend
-
-  redis:
-    image: redis:7-alpine
-    restart: always
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
-  # ---- One-shot: ensure the `auth` logical DB exists on RDS ------------------
-  # Django migrations run inside `entrypoint.sh prod` on first boot. Better Auth
-  # migrates its own schema on boot, but the `auth` DATABASE must exist first.
-  # Run once before the first `up`:
-  #   docker compose -f docker-compose.app.yml --env-file app.env run --rm authdb
-  authdb:
-    image: postgres:16-alpine
-    profiles: ["tools"]
-    environment:
-      PGPASSWORD: ${DB_PASSWORD}
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        psql -h "${DB_HOST}" -p "${DB_PORT:-5432}" -U "${DB_USER}" -d "${DB_NAME}" -tc \
-          "SELECT 1 FROM pg_database WHERE datname='${DB_NAME_AUTH}'" | grep -q 1 \
-          || psql -h "${DB_HOST}" -p "${DB_PORT:-5432}" -U "${DB_USER}" -d "${DB_NAME}" \
-               -c "CREATE DATABASE ${DB_NAME_AUTH}"
 
 networks:
   default:
