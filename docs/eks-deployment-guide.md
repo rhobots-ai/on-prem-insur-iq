@@ -1024,6 +1024,7 @@ Levers:
 | `LLM_PROVIDER` | SM `llm` | yes | `gemini` |
 | `GEMINI_API_KEY` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | SM `llm` | one required | — |
 | `GEMINI_MODEL` / `OPENAI_MODEL` / `ANTHROPIC_MODEL` | SM `llm` | no | sane defaults |
+| `POLICY_EXTRACT_GEMINI_MODEL` | SM `llm` | no | `gemini-2.5-flash-lite` |
 | `GOOGLE_API_KEY` | SM `llm` | no | — |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | SM `llm` | no | — |
 | `LANGFUSE_HOST` | configmap | no | `https://cloud.langfuse.com` |

@@ -170,6 +170,7 @@ llm_json=$(build_json \
   --arg LLM_PROVIDER         "${LLM_PROVIDER-}" \
   --arg GEMINI_API_KEY       "${GEMINI_API_KEY-}" \
   --arg GEMINI_MODEL         "${GEMINI_MODEL-}" \
+  --arg POLICY_EXTRACT_GEMINI_MODEL "${POLICY_EXTRACT_GEMINI_MODEL-}" \
   --arg OPENAI_API_KEY       "${OPENAI_API_KEY-}" \
   --arg OPENAI_MODEL         "${OPENAI_MODEL-}" \
   --arg ANTHROPIC_API_KEY    "${ANTHROPIC_API_KEY-}" \

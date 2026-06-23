@@ -353,19 +353,26 @@ The target-group health check hits `/healthz` (answered directly by nginx).
 
 ## 11. Upgrades & Rollback
 
-Roll a new image tag:
+Roll a new image tag. Bump `BACKEND_TAG` / `WEB_TAG` / `AUTH_TAG` in `app.env`,
+then run the helper (it does ECR login → pull → recreate → health-check):
 
 ```bash
-# On the app box — bump the tag in app.env, then:
+# On the app box, from deploy/ec2/:
+./update.sh
+```
+
+Django migrations run automatically on backend boot (`entrypoint.sh prod`), so
+there is no separate migrate step. Equivalent manual sequence:
+
+```bash
 source app.env
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-docker compose -f docker-compose.app.yml --env-file app.env run --rm migrate   # if the release has migrations
 docker compose -f docker-compose.app.yml --env-file app.env pull
 docker compose -f docker-compose.app.yml --env-file app.env up -d
 ```
 
-**Rollback**: set the previous tag in `app.env` and re-run `pull` + `up -d`.
+**Rollback**: set the previous tag in `app.env` and re-run `./update.sh`.
 Compose recreates only the changed services. For a full-box failure, replace the
 instance from its AMI — no DNS, IAM, or SG changes are needed (the ALB
 re-registers the new instance once it is healthy).
@@ -437,7 +444,7 @@ and [`deploy/ec2/gpu.env.example`](../deploy/ec2/gpu.env.example).
 | `MINERVA_API_URL` | app | `http://<gpu_private_ip>:8000` |
 | `BETTER_AUTH_SECRET` | app | Better Auth signing secret; auth's `DATABASE_STRING` is composed from `DB_*` + `DB_NAME_AUTH` |
 | `REQUIRE_EMAIL_VERIFICATION`, `*_CLIENT_ID/SECRET`, `AWS_SENDER_EMAIL` | app | Auth OAuth providers + transactional email |
-| `LLM_PROVIDER`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL` | app | Extraction LLM (`GOOGLE_API_KEY` = the Gemini key the backend reads) |
+| `LLM_PROVIDER`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `POLICY_EXTRACT_GEMINI_MODEL` | app | Extraction LLM (`GOOGLE_API_KEY` = the Gemini key the backend reads) |
 | `RHOBOTS_EXTRACT_IMAGE`, `RHOBOTS_EXTRACT_PORT` | gpu | Rhobots Extract container image + port |
 | `NUXT_PUBLIC_*`, `NUXT_APP_BASE_URL` | app | Nuxt SSR runtime config; URLs derive from `DOMAIN` in the `web` service. Optional overrides: `NUXT_PUBLIC_API_SCHEME` (default `https`), `NUXT_PUBLIC_ENABLED_SOCIAL_PROVIDERS`, `NUXT_APP_BASE_URL` (default `/`) |
 
