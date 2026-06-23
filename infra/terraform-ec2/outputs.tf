@@ -59,5 +59,11 @@ output "app_env_snippet" {
     GEMINI_API_KEY=__FILL__
     GEMINI_MODEL=gemini-2.5-flash
     POLICY_EXTRACT_GEMINI_MODEL=gemini-2.5-flash-lite
+    # Vertex AI (optional) — blank = public Gemini API. GOOGLE_APPLICATION_CREDENTIALS
+    # is a path to a SA keyfile that must exist in the container (or use ADC/WIF).
+    GOOGLE_GENAI_USE_VERTEXAI=
+    GOOGLE_CLOUD_PROJECT=
+    GOOGLE_CLOUD_LOCATION=
+    GOOGLE_APPLICATION_CREDENTIALS=
   EOT
 }
