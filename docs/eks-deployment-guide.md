@@ -1025,9 +1025,9 @@ Levers:
 | `GEMINI_API_KEY` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | SM `llm` | one required | — |
 | `GEMINI_MODEL` / `OPENAI_MODEL` / `ANTHROPIC_MODEL` | SM `llm` | no | sane defaults |
 | `POLICY_EXTRACT_GEMINI_MODEL` | SM `llm` | no | `gemini-2.5-flash-lite` |
-| `GOOGLE_GENAI_USE_VERTEXAI` | SM `llm` | no | blank (public Gemini API) |
-| `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` | SM `llm` | no | — (required if Vertex enabled) |
-| `GOOGLE_APPLICATION_CREDENTIALS` | SM `llm` | no | — (path to SA keyfile in the pod; mount via secret volume or use Workload Identity/ADC) |
+| `GOOGLE_GENAI_USE_VERTEXAI` | SM `llm` | no | `true` (on by default; blank = public Gemini API) |
+| `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` | SM `llm` | no | `rhobots-playzone` / `global` |
+| `GOOGLE_APPLICATION_CREDENTIALS` | SM `llm` | no | `/secrets/gcp/sa-key.json` — the chart mounts the `gcp-sa-key` Secret here (`gcp.keyFile` in values.yaml); create it with `kubectl -n insur-iq create secret generic gcp-sa-key --from-file=sa-key.json=<path>`. Blank Vertex = use ADC/WIF or public Gemini API |
 | `GOOGLE_API_KEY` | SM `llm` | no | — |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | SM `llm` | no | — |
 | `LANGFUSE_HOST` | configmap | no | `https://cloud.langfuse.com` |

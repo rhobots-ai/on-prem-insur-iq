@@ -114,6 +114,30 @@ envFrom block for backend/celery/migrate — references all 5 secrets + configma
 {{- end -}}
 
 {{/*
+GCP service-account key volume + mount (Vertex AI). Emit nothing when disabled.
+The secret volume is optional so a missing Secret never blocks pod start.
+*/}}
+{{- define "insur-iq.gcpVolumeMount" -}}
+{{- if .Values.gcp.keyFile.enabled }}
+- name: gcp-sa-key
+  mountPath: {{ .Values.gcp.keyFile.mountPath }}
+  readOnly: true
+{{- end }}
+{{- end -}}
+
+{{- define "insur-iq.gcpVolume" -}}
+{{- if .Values.gcp.keyFile.enabled }}
+- name: gcp-sa-key
+  secret:
+    secretName: {{ .Values.gcp.keyFile.secretName }}
+    optional: true
+    items:
+      - key: {{ .Values.gcp.keyFile.key }}
+        path: {{ .Values.gcp.keyFile.key }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Derived env vars injected into backend (computed from values, not in configmap).
 */}}
 {{- define "insur-iq.backendDerivedEnv" -}}

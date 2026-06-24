@@ -58,7 +58,9 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            {{- include "insur-iq.gcpVolumeMount" . | nindent 12 }}
       volumes:
         - name: tmp
           emptyDir:
             sizeLimit: 1Gi
+        {{- include "insur-iq.gcpVolume" . | nindent 8 }}
