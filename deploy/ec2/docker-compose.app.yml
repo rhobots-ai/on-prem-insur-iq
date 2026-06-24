@@ -64,6 +64,7 @@ services:
     restart: always
     volumes:
       - operator-static:/app/static
+      - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: &backend-env
       DEBUG: ${DEBUG:-False}
       APP_ENV: ${APP_ENV:-PROD}
@@ -103,8 +104,10 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       POLICY_EXTRACT_GEMINI_MODEL: ${POLICY_EXTRACT_GEMINI_MODEL:-gemini-2.5-flash-lite}
-      # Vertex AI (optional). Blank GOOGLE_GENAI_USE_VERTEXAI = public Gemini API.
-      # GOOGLE_APPLICATION_CREDENTIALS is a path to a SA keyfile that must exist in the container.
+      # Vertex AI — enabled from app.env (GOOGLE_GENAI_USE_VERTEXAI=true is the
+      # shipped default there). Blank = public Gemini API. GOOGLE_APPLICATION_CREDENTIALS
+      # points at sa-key.json inside /secrets/gcp, the host dir GCP_CREDENTIALS_DIR
+      # mounted read-only above.
       GOOGLE_GENAI_USE_VERTEXAI: ${GOOGLE_GENAI_USE_VERTEXAI:-}
       GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-}
       GOOGLE_CLOUD_LOCATION: ${GOOGLE_CLOUD_LOCATION:-}
@@ -126,6 +129,8 @@ services:
     image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
     command: ["bash", "./entrypoint.sh", "celery"]
     restart: always
+    volumes:
+      - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: *backend-env
 
   celery_policy_extract:
@@ -133,12 +138,16 @@ services:
     # Calls Rhobots Extract on the GPU box (MINERVA_API_URL), then the LLM.
     command: ["bash", "./entrypoint.sh", "celery-policy-extract"]
     restart: always
+    volumes:
+      - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: *backend-env
 
   celery_commission_intake:
     image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
     command: ["bash", "./entrypoint.sh", "celery-commission-intake"]
     restart: always
+    volumes:
+      - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: *backend-env
 
   beat:
@@ -146,6 +155,8 @@ services:
     # Singleton — never run more than one.
     command: ["bash", "./entrypoint.sh", "beat"]
     restart: always
+    volumes:
+      - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: *backend-env
 
   web:

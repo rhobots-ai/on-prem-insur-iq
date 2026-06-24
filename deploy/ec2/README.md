@@ -19,7 +19,10 @@ Quick start (on the app box, after Terraform has provisioned infra):
 
 ```bash
 terraform -chdir=infra/terraform-ec2 output -raw app_env_snippet > deploy/ec2/app.env
-# fill the __FILL__ placeholders, then:
+# fill the __FILL__ placeholders. Vertex AI is on by default — place the GCP
+# service-account key at /home/ubuntu/.gcp/sa-key.json (the GCP_CREDENTIALS_DIR,
+# mounted read-only to /secrets/gcp). To skip Vertex, blank GOOGLE_GENAI_USE_VERTEXAI
+# and fill GOOGLE_API_KEY/GEMINI_API_KEY instead. Then:
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 # Create the `auth` logical DB on RDS (one-shot, before first up):

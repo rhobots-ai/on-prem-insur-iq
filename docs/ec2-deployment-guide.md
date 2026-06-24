@@ -288,6 +288,24 @@ aws secretsmanager get-secret-value \
   --query SecretString --output text | jq -r .password
 ```
 
+### Vertex AI service-account key
+
+Vertex AI is **on by default** (`GOOGLE_GENAI_USE_VERTEXAI=true`, project
+`rhobots-playzone`). Each LLM container (`backend` + the celery workers) mounts
+the host dir `GCP_CREDENTIALS_DIR` (default `/home/ubuntu/.gcp`, absolute — docker
+compose does not expand `~`) read-only at `/secrets/gcp`. Put the key there:
+
+```bash
+# On the app box, place the service-account JSON (copy via SSM/scp/S3):
+mkdir -p /home/ubuntu/.gcp
+$EDITOR /home/ubuntu/.gcp/sa-key.json   # paste the SA key; chmod 600 recommended
+```
+
+`GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp/sa-key.json` (already in the template)
+points the containers at it. To use the public Gemini API instead, blank
+`GOOGLE_GENAI_USE_VERTEXAI` in `app.env` and fill `GOOGLE_API_KEY` / `GEMINI_API_KEY`
+— the dir still mounts harmlessly even when empty.
+
 On the GPU box (same `start-session` with `gpu_instance_id`): confirm the GPU,
 then fill `gpu.env`:
 
@@ -444,8 +462,8 @@ and [`deploy/ec2/gpu.env.example`](../deploy/ec2/gpu.env.example).
 | `MINERVA_API_URL` | app | `http://<gpu_private_ip>:8000` |
 | `BETTER_AUTH_SECRET` | app | Better Auth signing secret; auth's `DATABASE_STRING` is composed from `DB_*` + `DB_NAME_AUTH` |
 | `REQUIRE_EMAIL_VERIFICATION`, `*_CLIENT_ID/SECRET`, `AWS_SENDER_EMAIL` | app | Auth OAuth providers + transactional email |
-| `LLM_PROVIDER`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `POLICY_EXTRACT_GEMINI_MODEL` | app | Extraction LLM (`GOOGLE_API_KEY` = the Gemini key the backend reads) |
-| `GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `GOOGLE_APPLICATION_CREDENTIALS` | app | Vertex AI (optional). Blank `GOOGLE_GENAI_USE_VERTEXAI` = public Gemini API. `GOOGLE_APPLICATION_CREDENTIALS` is a **path** to a service-account JSON keyfile that must exist in the container — mount it yourself or rely on ADC/WIF; blank = Application Default Credentials |
+| `LLM_PROVIDER`, `GEMINI_MODEL`, `POLICY_EXTRACT_GEMINI_MODEL` | app | Extraction LLM model selection. `GOOGLE_API_KEY` / `GEMINI_API_KEY` only needed when Vertex is off |
+| `GOOGLE_GENAI_USE_VERTEXAI`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `GCP_CREDENTIALS_DIR`, `GOOGLE_APPLICATION_CREDENTIALS` | app | Vertex AI (**on by default**). `GCP_CREDENTIALS_DIR` (default `/home/ubuntu/.gcp`, absolute) is the host dir mounted read-only to `/secrets/gcp` in every LLM container; drop `sa-key.json` there. `GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp/sa-key.json` points at it. Blank `GOOGLE_GENAI_USE_VERTEXAI` = public Gemini API (then fill `GOOGLE_API_KEY`/`GEMINI_API_KEY`). See §[Vertex AI service-account key](#vertex-ai-service-account-key) |
 | `RHOBOTS_EXTRACT_IMAGE`, `RHOBOTS_EXTRACT_PORT` | gpu | Rhobots Extract container image + port |
 | `NUXT_PUBLIC_*`, `NUXT_APP_BASE_URL` | app | Nuxt SSR runtime config; URLs derive from `DOMAIN` in the `web` service. Optional overrides: `NUXT_PUBLIC_API_SCHEME` (default `https`), `NUXT_PUBLIC_ENABLED_SOCIAL_PROVIDERS`, `NUXT_APP_BASE_URL` (default `/`) |
 

@@ -102,13 +102,15 @@ secrets:
     GEMINI_API_KEY: ""
     GEMINI_MODEL: gemini-2.5-flash
     POLICY_EXTRACT_GEMINI_MODEL: gemini-2.5-flash-lite
-    # Vertex AI (optional) — blank GOOGLE_GENAI_USE_VERTEXAI = public Gemini API.
-    # GOOGLE_APPLICATION_CREDENTIALS is a path to a SA keyfile that must exist in
-    # the pod (mount via a secret volume, or use Workload Identity / ADC).
-    GOOGLE_GENAI_USE_VERTEXAI: ""
-    GOOGLE_CLOUD_PROJECT: ""
-    GOOGLE_CLOUD_LOCATION: ""
-    GOOGLE_APPLICATION_CREDENTIALS: ""
+    # Vertex AI — on by default. Blank GOOGLE_GENAI_USE_VERTEXAI = public Gemini API.
+    # GOOGLE_APPLICATION_CREDENTIALS points at the SA keyfile the chart mounts via
+    # the `gcp.keyFile` secret volume below (default /secrets/gcp/sa-key.json).
+    # In prod these come from the `llm` Secret (insur-iq/<env>/llm), seeded by
+    # scripts/seed-secrets.sh — the inline values here are the kind/dev fallback.
+    GOOGLE_GENAI_USE_VERTEXAI: "true"
+    GOOGLE_CLOUD_PROJECT: "rhobots-playzone"
+    GOOGLE_CLOUD_LOCATION: "global"
+    GOOGLE_APPLICATION_CREDENTIALS: "/secrets/gcp/sa-key.json"
     OPENAI_API_KEY: ""
     OPENAI_MODEL: gpt-4o-mini
     ANTHROPIC_API_KEY: ""
@@ -139,6 +141,26 @@ config:
   CSRF_TRUSTED_ORIGINS: ""        # default: https://<domain>
   HOST_NAME: ""                   # default: https://<domain>
   AWS_S3_PUBLIC_ENDPOINT_URL: ""  # default: blank (real S3); set only when fronting MinIO/S3 with a public proxy
+
+# -----------------------------------------------------------------------------
+# GCP service-account key — Vertex AI auth (parity with the EC2 path)
+# -----------------------------------------------------------------------------
+# When enabled, the chart mounts the named Secret (key `key`) read-only at
+# `mountPath` in backend + celery + beat pods. GOOGLE_APPLICATION_CREDENTIALS
+# (in the llm Secret) must point at <mountPath>/<key> — the default
+# /secrets/gcp/sa-key.json matches the values below. The volume is `optional`,
+# so a missing Secret never blocks pod start (use ADC/WIF or the public Gemini
+# API instead, with GOOGLE_GENAI_USE_VERTEXAI blank).
+#
+# Create the Secret from the keyfile (not managed by this chart):
+#   kubectl -n insur-iq create secret generic gcp-sa-key \
+#     --from-file=sa-key.json=/path/to/service-account.json
+gcp:
+  keyFile:
+    enabled: true
+    secretName: gcp-sa-key
+    key: sa-key.json
+    mountPath: /secrets/gcp
 
 # -----------------------------------------------------------------------------
 # Per-workload sections

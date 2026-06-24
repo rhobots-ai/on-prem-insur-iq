@@ -55,15 +55,17 @@ output "app_env_snippet" {
     BETTER_AUTH_SECRET=__FILL__
     REQUIRE_EMAIL_VERIFICATION=false
     LLM_PROVIDER=gemini
-    GOOGLE_API_KEY=__FILL__
-    GEMINI_API_KEY=__FILL__
     GEMINI_MODEL=gemini-2.5-flash
     POLICY_EXTRACT_GEMINI_MODEL=gemini-2.5-flash-lite
-    # Vertex AI (optional) — blank = public Gemini API. GOOGLE_APPLICATION_CREDENTIALS
-    # is a path to a SA keyfile that must exist in the container (or use ADC/WIF).
-    GOOGLE_GENAI_USE_VERTEXAI=
-    GOOGLE_CLOUD_PROJECT=
-    GOOGLE_CLOUD_LOCATION=
-    GOOGLE_APPLICATION_CREDENTIALS=
+    # Vertex AI — on by default. Place the service-account JSON at
+    # $GCP_CREDENTIALS_DIR/sa-key.json on the host (absolute path; compose won't
+    # expand ~); it mounts read-only to /secrets/gcp in every LLM container. To use
+    # the public Gemini API instead, blank GOOGLE_GENAI_USE_VERTEXAI and fill
+    # GOOGLE_API_KEY + GEMINI_API_KEY.
+    GOOGLE_GENAI_USE_VERTEXAI=true
+    GOOGLE_CLOUD_PROJECT=rhobots-playzone
+    GOOGLE_CLOUD_LOCATION=global
+    GCP_CREDENTIALS_DIR=/home/ubuntu/.gcp
+    GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp/sa-key.json
   EOT
 }
