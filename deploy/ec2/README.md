@@ -11,9 +11,32 @@ runbook: [`../../docs/ec2-deployment-guide.md`](../../docs/ec2-deployment-guide.
 | `app.env.example` | app box | copy → `app.env`, fill secrets |
 | `gpu.env.example` | GPU box | copy → `gpu.env`, set Rhobots Extract image |
 | `update.sh` | app box | roll a new release: ECR login → pull → recreate → health-check |
+| `docker-compose.override.yml` | app box | *optional, untracked* — site-local changes; see below |
 
 > **Never commit `app.env` or `gpu.env`** — they hold DB passwords, auth secrets,
 > and LLM keys. Both are gitignored (`deploy/ec2/*.env`).
+
+### Site-local overrides
+
+If `docker-compose.override.yml` exists in this directory, `update.sh` passes it
+to every compose command. Put anything site-specific there — published ports,
+bind mounts, disabling a service via `profiles:` — and leave
+`docker-compose.app.yml` pristine so `git pull` can never revert a deployment
+decision.
+
+Compose does **not** pick this file up on its own here: it only auto-loads an
+override next to a *default-named* base file (`docker-compose.yml`), and this
+project's base file is `docker-compose.app.yml`. So a hand-run
+`docker compose -f docker-compose.app.yml ...` silently ignores the override and
+can undo a site's configuration. Either use `update.sh`, or pass both files:
+
+```bash
+docker compose -f docker-compose.app.yml -f docker-compose.override.yml \
+  --env-file app.env ps
+```
+
+A service held behind a profile does not start by default; run it on demand with
+`--profile <name> up -d <service>`.
 
 Quick start (on the app box, after Terraform has provisioned infra):
 

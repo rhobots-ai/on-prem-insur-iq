@@ -43,7 +43,17 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-compose() { docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"; }
+# An optional docker-compose.override.yml is honoured when present. Compose only
+# auto-loads that file when the base file has the default name, and this project
+# does not, so it has to be passed explicitly -- without this, a site-local
+# override is silently ignored by every command below.
+COMPOSE_FILES=(-f "$COMPOSE_FILE")
+OVERRIDE_FILE="docker-compose.override.yml"
+if [[ -f "$OVERRIDE_FILE" ]]; then
+  COMPOSE_FILES+=(-f "$OVERRIDE_FILE")
+fi
+
+compose() { docker compose "${COMPOSE_FILES[@]}" --env-file "$ENV_FILE" "$@"; }
 
 # Pull ECR_REGISTRY / AWS_REGION / DOMAIN out of the env file without leaking
 # the rest of it into this shell.
@@ -96,8 +106,8 @@ for ep in "${endpoints[@]}"; do
     if (( $(date +%s) >= deadline )); then
       printf "\033[31mFAIL\033[0m\n"
       echo "error: $ep did not become healthy in time." >&2
-      echo "       check: docker compose -f $COMPOSE_FILE --env-file $ENV_FILE ps" >&2
-      echo "       logs:  docker compose -f $COMPOSE_FILE --env-file $ENV_FILE logs --tail=50" >&2
+      echo "       check: docker compose ${COMPOSE_FILES[*]} --env-file $ENV_FILE ps" >&2
+      echo "       logs:  docker compose ${COMPOSE_FILES[*]} --env-file $ENV_FILE logs --tail=50" >&2
       echo "       rollback: restore previous *_TAG in $ENV_FILE and re-run ./update.sh" >&2
       exit 1
     fi
