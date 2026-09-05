@@ -1,0 +1,1996 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Deployment guides for running insur-iq on a customer-managed AWS account (EKS or EC2)">
+      
+      
+      
+      
+        <link rel="prev" href="../eks-deployment-guide/">
+      
+      
+        <link rel="next" href="../infra/terraform/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>EC2 Deployment Guide - insur-iq Deployment Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#insur-iq-aws-ec2-load-balancer-deployment-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="insur-iq Deployment Docs" class="md-header__button md-logo" aria-label="insur-iq Deployment Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            insur-iq Deployment Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              EC2 Deployment Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rhobots-ai/on-prem-insur-iq" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    rhobots-ai/on-prem-insur-iq
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../eks-deployment-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  EKS Deployment Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  EC2 Deployment Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../infra/terraform/" class="md-tabs__link">
+          
+  
+  
+  Infrastructure
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="insur-iq Deployment Docs" class="md-nav__button md-logo" aria-label="insur-iq Deployment Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    insur-iq Deployment Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rhobots-ai/on-prem-insur-iq" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    rhobots-ai/on-prem-insur-iq
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../eks-deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EKS Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EC2 Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EC2 Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-overview-ec2-vs-eks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Overview — EC2 vs EKS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-resource-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Resource Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Resource Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-app-ec2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 App EC2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-gpu-ec2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 GPU EC2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-rds-postgresql-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 RDS — PostgreSQL 16
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-s3-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 S3 &amp; Redis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-security-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Security Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-pre-requisite-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Pre-requisite Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-provision-infra-terraform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Provision Infra (Terraform)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-dns-acm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. DNS &amp; ACM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-configure-the-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Configure the Instances
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Configure the Instances">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vertex-ai-service-account-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vertex AI service-account key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-bring-up-the-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Bring Up the Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-upgrades-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Upgrades &amp; Rollback
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-failover-availability-day-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Failover, Availability &amp; Day-2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-cost-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Cost Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-a-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A — Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-b-security-group-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix B — Security Group Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-c-decision-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix C — Decision Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Infrastructure
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Infrastructure
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/terraform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../resource-requirements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resource Requirements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-overview-ec2-vs-eks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Overview — EC2 vs EKS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-resource-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Resource Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Resource Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-app-ec2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 App EC2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-gpu-ec2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 GPU EC2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-rds-postgresql-16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 RDS — PostgreSQL 16
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-s3-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 S3 &amp; Redis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-security-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Security Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-pre-requisite-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Pre-requisite Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-provision-infra-terraform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Provision Infra (Terraform)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-dns-acm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. DNS &amp; ACM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-configure-the-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Configure the Instances
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Configure the Instances">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vertex-ai-service-account-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vertex AI service-account key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-bring-up-the-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Bring Up the Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-upgrades-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Upgrades &amp; Rollback
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-failover-availability-day-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Failover, Availability &amp; Day-2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-cost-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Cost Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-a-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A — Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-b-security-group-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix B — Security Group Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-c-decision-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix C — Decision Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="insur-iq-aws-ec2-load-balancer-deployment-guide">insur-iq — AWS EC2 + Load Balancer Deployment Guide<a class="headerlink" href="#insur-iq-aws-ec2-load-balancer-deployment-guide" title="Permanent link">&para;</a></h1>
+<p>This guide covers the <strong>EC2 / Docker Compose</strong> deployment path — a simpler
+alternative to the <a href="../eks-deployment-guide/">EKS path</a> for customers who do not
+run Kubernetes. It is both an <strong>architecture reference</strong> and an <strong>operator
+runbook</strong>: read §1–§4 to understand what gets built and why, then follow §5–§12
+to stand it up.</p>
+<p>The topology follows the same pattern used for the PB Partners on-prem
+deployment, with one change: <strong>Rhobots Extract OCR runs on a dedicated GPU box</strong>, separate
+from the app box, so the two scale and fail independently.</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#1-overview-ec2-vs-eks">Overview — EC2 vs EKS</a></li>
+<li><a href="#2-architecture">Architecture</a></li>
+<li><a href="#3-resource-configuration">Resource Configuration</a></li>
+<li><a href="#4-security-architecture">Security Architecture</a></li>
+<li><a href="#5-pre-requisite-checklist">Pre-requisite Checklist</a></li>
+<li><a href="#6-provision-infra-terraform">Provision Infra (Terraform)</a></li>
+<li><a href="#7-dns-acm">DNS &amp; ACM</a></li>
+<li><a href="#8-configure-the-instances">Configure the Instances</a></li>
+<li><a href="#9-bring-up-the-stack">Bring Up the Stack</a></li>
+<li><a href="#10-verification">Verification</a></li>
+<li><a href="#11-upgrades-rollback">Upgrades &amp; Rollback</a></li>
+<li><a href="#12-failover-availability-day-2">Failover, Availability &amp; Day-2</a></li>
+<li><a href="#13-cost-reference">Cost Reference</a></li>
+<li><a href="#appendix-a-environment-variables">Appendix A — Environment Variables</a></li>
+<li><a href="#appendix-b-security-group-rules">Appendix B — Security Group Rules</a></li>
+<li><a href="#appendix-c-decision-log">Appendix C — Decision Log</a></li>
+</ol>
+<hr />
+<h2 id="1-overview-ec2-vs-eks">1. Overview — EC2 vs EKS<a class="headerlink" href="#1-overview-ec2-vs-eks" title="Permanent link">&para;</a></h2>
+<p>Both paths run the identical container images (<code>backend</code>, <code>web</code>, <code>auth</code>) and the
+same data plane shape (Postgres + Redis + S3). They differ only in the runtime.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>EC2 (this guide)</strong></th>
+<th><strong>EKS</strong> (<a href="../eks-deployment-guide/">guide</a>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Orchestration</td>
+<td>Docker Compose on 2 EC2 boxes</td>
+<td>Kubernetes (Helm chart)</td>
+</tr>
+<tr>
+<td>Routing</td>
+<td>nginx on the app box, behind an ALB</td>
+<td>ALB Ingress (LBC)</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>container on the app box</td>
+<td>ElastiCache</td>
+</tr>
+<tr>
+<td>DB access</td>
+<td>direct to RDS (TLS)</td>
+<td>RDS Proxy</td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td><code>.env</code> files on the instances</td>
+<td>External Secrets Operator + Secrets Manager</td>
+</tr>
+<tr>
+<td>Identity</td>
+<td>one EC2 instance profile</td>
+<td>EKS Pod Identity (per-workload roles)</td>
+</tr>
+<tr>
+<td>Scaling</td>
+<td>vertical (resize the box)</td>
+<td>HPA + Cluster Autoscaler</td>
+</tr>
+<tr>
+<td>Best for</td>
+<td>single-tenant, low-ops, "looks like on-prem"</td>
+<td>multi-tenant, elastic, HA</td>
+</tr>
+</tbody>
+</table>
+<p>Choose EC2 when the customer wants the smallest possible operational surface and
+does not need horizontal autoscaling or multi-AZ compute. Choose EKS for
+elasticity and high availability.</p>
+<hr />
+<h2 id="2-architecture">2. Architecture<a class="headerlink" href="#2-architecture" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                         Internet
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                            │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                            ▼
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                 ┌──────────────────────┐
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                 │   Route 53 ALIAS      │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                 │ insuriq.acmecorp.com │
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                 └──────────┬───────────┘
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                            ▼
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                 ┌──────────────────────┐
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                 │    ALB + ACM cert    │  TLS terminates here; idle_timeout=300s
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                 │   :443 → app box :80 │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                 └──────────┬───────────┘
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                            ▼  HTTP :80
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>   ┌──── App EC2 (private subnet) — Docker Compose ──────────────────┐
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>   │  nginx  /→web  /service-api→backend  /auth→auth                 │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>   │  ┌──────┐   ┌──────────┐   ┌──────┐                             │
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>   │  │ web  │   │ backend  │   │ auth │                             │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>   │  │ Nuxt │   │ Django   │   │Better│                             │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>   │  │ :3000│   │ :8000    │   │ :10000                             │
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>   │  └──────┘   └────┬─────┘   └──────┘                             │
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>   │  celery: default · policy_extract · commission_intake · beat   │
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>   │  redis (broker, container)                                      │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>   └────────┬────────────────────────────┬──────────────────────────┘
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>            │ :8000 (Rhobots Extract HTTP)         │ :5432 (TLS)
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>            ▼                             ▼
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>   ┌──────────────────┐         ┌──────────────────┐    ┌────────────┐
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>   │ GPU EC2 (private)│         │ RDS Postgres 16  │    │ S3 bucket  │
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>   │ Rhobots Extract OCR       │         │  insure_iq       │    │ uploads    │
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>   │ g5.2xlarge A10G  │         │  auth            │    └────────────┘
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>   └──────────────────┘         └──────────────────┘
+</code></pre></div>
+<p><strong>Request flow:</strong> ALB terminates TLS and forwards HTTP to nginx on the app box.
+nginx routes by path. The <code>policy_extract</code> celery worker drives the extraction
+pipeline: it calls <strong>Rhobots Extract</strong> on the GPU box to parse the PDF to Markdown, then
+calls the <strong>LLM</strong> (Gemini by default) to extract and map fields, and writes
+results to RDS. Uploads and artefacts live in S3, reached via the instance
+profile.</p>
+<p><strong>Services on the app box (<code>docker-compose.app.yml</code>):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>nginx</td>
+<td>Reverse proxy / path routing</td>
+</tr>
+<tr>
+<td>web</td>
+<td>Nuxt SSR dashboard (:3000)</td>
+</tr>
+<tr>
+<td>backend</td>
+<td>Django + gunicorn REST API (:8000)</td>
+</tr>
+<tr>
+<td>auth</td>
+<td>Better Auth — JWT issuance &amp; sessions (:10000)</td>
+</tr>
+<tr>
+<td>celery-default</td>
+<td>General background tasks</td>
+</tr>
+<tr>
+<td>celery-policy-extract</td>
+<td>AI extraction pipeline (concurrency 12)</td>
+</tr>
+<tr>
+<td>celery-commission-intake</td>
+<td>Commission intake queue</td>
+</tr>
+<tr>
+<td>celery-beat</td>
+<td>Scheduled task runner (singleton)</td>
+</tr>
+<tr>
+<td>redis</td>
+<td>Celery broker (container)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>On the GPU box (<code>docker-compose.gpu.yml</code>):</strong> <code>rhobots-extract</code> — GPU-accelerated
+PDF→Markdown parser on :8000.</p>
+<hr />
+<h2 id="3-resource-configuration">3. Resource Configuration<a class="headerlink" href="#3-resource-configuration" title="Permanent link">&para;</a></h2>
+<h3 id="31-app-ec2">3.1 App EC2<a class="headerlink" href="#31-app-ec2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Instance type</td>
+<td><code>m6i.xlarge</code> (4 vCPU / 16 GB) — no GPU</td>
+</tr>
+<tr>
+<td>Root volume</td>
+<td>100 GB gp3, encrypted</td>
+</tr>
+<tr>
+<td>OS</td>
+<td>Ubuntu 24.04 LTS (Noble)</td>
+</tr>
+<tr>
+<td>Runs</td>
+<td>nginx, web, backend, auth, celery x4, redis</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-gpu-ec2">3.2 GPU EC2<a class="headerlink" href="#32-gpu-ec2" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Instance type</td>
+<td><code>g5.2xlarge</code> (8 vCPU / 32 GB / 1× NVIDIA A10G 24 GB)</td>
+</tr>
+<tr>
+<td>Root volume</td>
+<td>200 GB gp3, encrypted</td>
+</tr>
+<tr>
+<td>OS</td>
+<td>Ubuntu 24.04 LTS (Noble) + NVIDIA driver + container toolkit</td>
+</tr>
+<tr>
+<td>Runs</td>
+<td>Rhobots Extract OCR</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>⚠️ The A10G GPU is required for Rhobots Extract. CPU-only parsing is far too slow for
+production insurance documents.</p>
+</blockquote>
+<h3 id="33-rds-postgresql-16">3.3 RDS — PostgreSQL 16<a class="headerlink" href="#33-rds-postgresql-16" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Engine</td>
+<td>PostgreSQL <strong>16</strong> (the repo standard; the PB Partners doc used 17)</td>
+</tr>
+<tr>
+<td>Instance</td>
+<td><code>db.t4g.medium</code> (configurable), 100 GB gp3, encrypted</td>
+</tr>
+<tr>
+<td>Availability</td>
+<td>Single-AZ (set <code>rds_multi_az=true</code> for HA)</td>
+</tr>
+<tr>
+<td>Backups</td>
+<td>Daily, 7-day retention; PITR enabled</td>
+</tr>
+<tr>
+<td>TLS</td>
+<td>Enforced (<code>rds.force_ssl=1</code>)</td>
+</tr>
+<tr>
+<td>Logical DBs</td>
+<td><code>insure_iq</code> (app) · <code>auth</code> (Better Auth)</td>
+</tr>
+</tbody>
+</table>
+<p>No RDS Proxy — the fixed set of instances opens few connections and connects
+directly over TLS.</p>
+<h3 id="34-s3-redis">3.4 S3 &amp; Redis<a class="headerlink" href="#34-s3-redis" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>S3</strong>: one bucket <code>insur-iq-&lt;env&gt;-ec2-uploads</code>, SSE-S3, reached via the VPC
+  gateway endpoint (no NAT egress cost).</li>
+<li><strong>Redis</strong>: a container on the app box, broker only — task results persist in
+  Postgres. No ElastiCache.</li>
+</ul>
+<hr />
+<h2 id="4-security-architecture">4. Security Architecture<a class="headerlink" href="#4-security-architecture" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Identity &amp; access</strong> — Users authenticate via Better Auth (email/password,
+  JWT, short-lived tokens). One <strong>EC2 instance profile</strong> grants the boxes S3
+  access, ECR pull, and SSM Session Manager. No long-lived AWS keys on disk.</li>
+<li><strong>Network isolation</strong> — Both EC2 boxes live in <strong>private subnets</strong>. Only the
+  ALB is public. Security groups are least-privilege:</li>
+<li>ALB ← internet on 80/443</li>
+<li>app ← ALB on 80 only</li>
+<li>GPU ← app on 8000 only</li>
+<li>RDS ← app on 5432 only</li>
+<li><strong>TLS coverage</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Connection</th>
+<th>Protocol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User → ALB</td>
+<td>HTTPS / TLS 1.2+ (TLS13 policy)</td>
+</tr>
+<tr>
+<td>ALB → nginx (app box)</td>
+<td>HTTP, inside the VPC</td>
+</tr>
+<tr>
+<td>app box → RDS</td>
+<td>TLS (enforced)</td>
+</tr>
+<tr>
+<td>app box → Rhobots Extract (GPU box)</td>
+<td>HTTP, inside the VPC</td>
+</tr>
+<tr>
+<td>app box → LLM API</td>
+<td>HTTPS (outbound only)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Secrets</strong> — config lives in <code>.env</code> files on the instances (gitignored), not
+  in source. For tighter governance you can store the same values in <strong>SSM
+  Parameter Store</strong> (SecureString) and render <code>app.env</code> at boot — optional, not
+  required.</li>
+</ul>
+<p>Full SG matrix in <a href="#appendix-b-security-group-rules">Appendix B</a>.</p>
+<hr />
+<h2 id="5-pre-requisite-checklist">5. Pre-requisite Checklist<a class="headerlink" href="#5-pre-requisite-checklist" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>AWS account + credentials (<code>aws sts get-caller-identity</code> works)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Terraform ≥ 1.6, AWS CLI v2 installed locally</td>
+</tr>
+<tr>
+<td>3</td>
+<td>A registered domain + Route53 hosted zone (or external DNS you control)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>ECR repos exist: <code>insur-iq/backend</code>, <code>insur-iq/web</code>, and <code>insur-iq/rhobots-extract</code> (managed outside Terraform — they outlive any environment)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Image tags pushed to ECR by CI</td>
+</tr>
+<tr>
+<td>6</td>
+<td>OAuth / LLM (Gemini) API keys on hand for the <code>.env</code> files</td>
+</tr>
+</tbody>
+</table>
+<p>Set shell vars once per terminal:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AWS_REGION</span><span class="o">=</span>ap-south-1
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">DOMAIN</span><span class="o">=</span>insuriq.acmecorp.com
+</code></pre></div>
+<hr />
+<h2 id="6-provision-infra-terraform">6. Provision Infra (Terraform)<a class="headerlink" href="#6-provision-infra-terraform" title="Permanent link">&para;</a></h2>
+<p>The EC2 path has its <strong>own Terraform root</strong>: <code>infra/terraform-ec2/</code> (separate
+from the EKS <code>infra/terraform/</code>). Use one or the other per environment.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>infra/terraform-ec2
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>terraform<span class="w"> </span>init
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>terraform<span class="w"> </span>plan<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-var<span class="w"> </span><span class="s2">"domain=</span><span class="nv">$DOMAIN</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>-var<span class="w"> </span><span class="s2">"region=</span><span class="nv">$AWS_REGION</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>-out<span class="w"> </span>tfplan
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>terraform<span class="w"> </span>apply<span class="w"> </span>tfplan
+</code></pre></div>
+<p>This provisions: VPC (3 AZ, public/private/db subnets, single NAT, S3 gateway
+endpoint), the ALB + target group + listeners, the app and GPU EC2 instances
+(with Docker/NVIDIA bootstrapped via cloud-init), the instance profile, RDS
+Postgres 16, the S3 bucket, and the ACM cert.</p>
+<p>Key outputs:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>terraform<span class="w"> </span>output<span class="w"> </span>alb_dns_name<span class="w">        </span><span class="c1"># point DNS here if not using Route53</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>terraform<span class="w"> </span>output<span class="w"> </span>app_private_ip
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>terraform<span class="w"> </span>output<span class="w"> </span>gpu_private_ip<span class="w">      </span><span class="c1"># becomes MINERVA_API_URL</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>terraform<span class="w"> </span>output<span class="w"> </span>rds_master_secret_arn
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>app_env_snippet<span class="w"> </span>&gt;<span class="w"> </span>../../deploy/ec2/app.env
+</code></pre></div>
+<hr />
+<h2 id="7-dns-acm">7. DNS &amp; ACM<a class="headerlink" href="#7-dns-acm" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>ACM</strong>: if you did not pass <code>acm_certificate_arn</code>, Terraform requested a new
+  DNS-validated cert. Create the validation CNAME shown in the ACM console (or
+  via <code>aws acm describe-certificate</code>) and wait for status <strong>ISSUED</strong>.</li>
+<li><strong>DNS</strong>: if you passed <code>route53_zone_id</code>, Terraform already created the ALIAS
+  A-record. Otherwise create a CNAME/ALIAS for <code>$DOMAIN</code> → <code>alb_dns_name</code> in
+  your provider.</li>
+</ul>
+<hr />
+<h2 id="8-configure-the-instances">8. Configure the Instances<a class="headerlink" href="#8-configure-the-instances" title="Permanent link">&para;</a></h2>
+<p>Connect to the app box via SSM Session Manager (no SSH, no bastion):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>aws<span class="w"> </span>ssm<span class="w"> </span>start-session<span class="w"> </span>--target<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>app_instance_id<span class="k">)</span><span class="s2">"</span>
+</code></pre></div>
+<p>On the app box:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Copy deploy/ec2/ to the box (scp via SSM tunnel, git clone, or S3).</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">cd</span><span class="w"> </span>/opt/insur-iq/deploy/ec2
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Fill app.env (start from the Terraform snippet, then add secrets).</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>cp<span class="w"> </span>app.env.example<span class="w"> </span>app.env<span class="w">   </span><span class="c1"># or use the app_env_snippet output</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nv">$EDITOR</span><span class="w"> </span>app.env<span class="w">              </span><span class="c1"># fill DB_PASSWORD (from rds_master_secret_arn), SECRET_KEY,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">                             </span><span class="c1"># BETTER_AUTH_SECRET, GEMINI_API_KEY, MINERVA_API_URL</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Log Docker in to ECR.</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="nb">source</span><span class="w"> </span>app.env
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span><span class="s2">"</span><span class="nv">$AWS_REGION</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span><span class="s2">"</span><span class="nv">$ECR_REGISTRY</span><span class="s2">"</span>
+</code></pre></div>
+<p>Fetch the DB password from the RDS master secret:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>aws<span class="w"> </span>secretsmanager<span class="w"> </span>get-secret-value<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--secret-id<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>terraform<span class="w"> </span>output<span class="w"> </span>-raw<span class="w"> </span>rds_master_secret_arn<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--query<span class="w"> </span>SecretString<span class="w"> </span>--output<span class="w"> </span>text<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span>.password
+</code></pre></div>
+<h3 id="vertex-ai-service-account-key">Vertex AI service-account key<a class="headerlink" href="#vertex-ai-service-account-key" title="Permanent link">&para;</a></h3>
+<p>Vertex AI is <strong>on by default</strong> (<code>GOOGLE_GENAI_USE_VERTEXAI=true</code>, project
+<code>rhobots-playzone</code>). Each LLM container (<code>backend</code> + the celery workers) mounts
+the host dir <code>GCP_CREDENTIALS_DIR</code> (default <code>/home/ubuntu/.gcp</code>, absolute — docker
+compose does not expand <code>~</code>) read-only at <code>/secrets/gcp</code>. Put the key there:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># On the app box, place the service-account JSON (copy via SSM/scp/S3):</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>/home/ubuntu/.gcp
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nv">$EDITOR</span><span class="w"> </span>/home/ubuntu/.gcp/sa-key.json<span class="w">   </span><span class="c1"># paste the SA key; chmod 600 recommended</span>
+</code></pre></div>
+<p><code>GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp/sa-key.json</code> (already in the template)
+points the containers at it. To use the public Gemini API instead, blank
+<code>GOOGLE_GENAI_USE_VERTEXAI</code> in <code>app.env</code> and fill <code>GOOGLE_API_KEY</code> / <code>GEMINI_API_KEY</code>
+— the dir still mounts harmlessly even when empty.</p>
+<p>On the GPU box (same <code>start-session</code> with <code>gpu_instance_id</code>): confirm the GPU,
+then fill <code>gpu.env</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>--gpus<span class="w"> </span>all<span class="w"> </span>nvidia/cuda:12.4.0-base-ubuntu22.04<span class="w"> </span>nvidia-smi
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>cp<span class="w"> </span>gpu.env.example<span class="w"> </span>gpu.env<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nv">$EDITOR</span><span class="w"> </span>gpu.env<span class="w">   </span><span class="c1"># set RHOBOTS_EXTRACT_IMAGE</span>
+</code></pre></div>
+<hr />
+<h2 id="9-bring-up-the-stack">9. Bring Up the Stack<a class="headerlink" href="#9-bring-up-the-stack" title="Permanent link">&para;</a></h2>
+<p><strong>GPU box first</strong> (the app box's extraction worker depends on it):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.gpu.yml<span class="w"> </span>--env-file<span class="w"> </span>gpu.env<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p><strong>App box</strong> — create the <code>auth</code> logical DB once, then start:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Ensure the `auth` database exists on RDS (one-shot).</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.app.yml<span class="w"> </span>--env-file<span class="w"> </span>app.env<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>authdb
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.app.yml<span class="w"> </span>--env-file<span class="w"> </span>app.env<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p>The backend image's <code>entrypoint.sh prod</code> mode runs Django migrations and
+<code>collectstatic</code> (into the shared <code>operator-static</code> volume that nginx serves at
+<code>/service-api/static/</code>) on boot. Better Auth runs its own schema migrations on
+first boot against the <code>auth</code> DB.</p>
+<blockquote>
+<p><strong>One generic web image.</strong> The Nuxt <code>NUXT_PUBLIC_*</code> URLs are read at <strong>runtime</strong>
+by the SSR server (Nuxt 3 <code>runtimeConfig</code> env override), so a single <code>insur-iq/web</code>
+image serves any domain — no per-domain CI build. The <code>web</code> service in
+<code>docker-compose.app.yml</code> derives them from <code>${DOMAIN}</code>:
+<code>NUXT_PUBLIC_API_BASE_URL=&lt;domain&gt;/service-api</code>,
+<code>NUXT_PUBLIC_AUTH_BASE_URL=https://&lt;domain&gt;/auth/api/auth</code>,
+<code>NUXT_PUBLIC_APP_BASE_URL=https://&lt;domain&gt;</code>, <code>NUXT_PUBLIC_API_SCHEME=https</code>.</p>
+</blockquote>
+<hr />
+<h2 id="10-verification">10. Verification<a class="headerlink" href="#10-verification" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>curl<span class="w"> </span>-fsS<span class="w"> </span>https://<span class="nv">$DOMAIN</span>/service-api/api/health/
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>curl<span class="w"> </span>-fsS<span class="w"> </span>https://<span class="nv">$DOMAIN</span>/auth/api/auth/ok
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>curl<span class="w"> </span>-fsS<span class="w"> </span>https://<span class="nv">$DOMAIN</span>/<span class="w"> </span>-o<span class="w"> </span>/dev/null
+</code></pre></div>
+<p>All three returning 2xx means the deploy is live. Also confirm the ALB target is
+healthy:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>aws<span class="w"> </span>elbv2<span class="w"> </span>describe-target-health<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>--target-group-arn<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>aws<span class="w"> </span>elbv2<span class="w"> </span>describe-target-groups<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">      </span>--names<span class="w"> </span>insur-iq-<span class="si">${</span><span class="nv">ENV</span><span class="k">:-</span><span class="nv">prod</span><span class="si">}</span>-app<span class="w"> </span>--query<span class="w"> </span><span class="s1">'TargetGroups[0].TargetGroupArn'</span><span class="w"> </span>--output<span class="w"> </span>text<span class="k">)</span><span class="s2">"</span>
+</code></pre></div>
+<p>The target-group health check hits <code>/healthz</code> (answered directly by nginx).</p>
+<hr />
+<h2 id="11-upgrades-rollback">11. Upgrades &amp; Rollback<a class="headerlink" href="#11-upgrades-rollback" title="Permanent link">&para;</a></h2>
+<p>Roll a new image tag. Bump <code>BACKEND_TAG</code> / <code>WEB_TAG</code> / <code>AUTH_TAG</code> in <code>app.env</code>,
+then run the helper (it does ECR login → pull → recreate → health-check):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># On the app box, from deploy/ec2/:</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>./update.sh
+</code></pre></div>
+<p>Django migrations run automatically on backend boot (<code>entrypoint.sh prod</code>), so
+there is no separate migrate step. Equivalent manual sequence:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">source</span><span class="w"> </span>app.env
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>aws<span class="w"> </span>ecr<span class="w"> </span>get-login-password<span class="w"> </span>--region<span class="w"> </span><span class="s2">"</span><span class="nv">$AWS_REGION</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>--username<span class="w"> </span>AWS<span class="w"> </span>--password-stdin<span class="w"> </span><span class="s2">"</span><span class="nv">$ECR_REGISTRY</span><span class="s2">"</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.app.yml<span class="w"> </span>--env-file<span class="w"> </span>app.env<span class="w"> </span>pull
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.app.yml<span class="w"> </span>--env-file<span class="w"> </span>app.env<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p><strong>Rollback</strong>: set the previous tag in <code>app.env</code> and re-run <code>./update.sh</code>.
+Compose recreates only the changed services. For a full-box failure, replace the
+instance from its AMI — no DNS, IAM, or SG changes are needed (the ALB
+re-registers the new instance once it is healthy).</p>
+<hr />
+<h2 id="12-failover-availability-day-2">12. Failover, Availability &amp; Day-2<a class="headerlink" href="#12-failover-availability-day-2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App health</td>
+<td>ALB health check on <code>/healthz</code>; unhealthy targets are drained</td>
+</tr>
+<tr>
+<td>Compute recovery</td>
+<td>Replace EC2 from an AMI; re-attach to the target group</td>
+</tr>
+<tr>
+<td>Database recovery</td>
+<td>Daily RDS snapshots + PITR (<code>rds_multi_az=true</code> for AZ failover)</td>
+</tr>
+<tr>
+<td>In-flight tasks</td>
+<td>Fail safely; completed results persist in RDS + S3</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Day-2 runbooks:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Logs</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.app.yml<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>backend
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.app.yml<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>celery_policy_extract
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># Restart a service</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.app.yml<span class="w"> </span>--env-file<span class="w"> </span>app.env<span class="w"> </span>restart<span class="w"> </span>backend
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># Scale extraction throughput — POLICY_EXTRACT_CONCURRENCY in app.env (default 12;</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="c1"># entrypoint.sh supplies the fallback). Each prefork child recycles at ~512MB, so</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="c1"># budget concurrency x 512MB of instance RAM: 12 is ~6GB of the m6i.xlarge's 16GB,</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="c1"># shared with the API, the other workers, redis and the SSR frontend. Past that,</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="c1"># resize the app box (vertical) or run the GPU box larger. There is no HPA here.</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="c1"># GPU sanity</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>nvidia-smi
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.gpu.yml<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>rhobots-extract
+</code></pre></div>
+<hr />
+<h2 id="13-cost-reference">13. Cost Reference<a class="headerlink" href="#13-cost-reference" title="Permanent link">&para;</a></h2>
+<p>Indicative on-demand monthly cost (ap-south-1, 730 h; excludes data transfer &amp;
+LLM API usage):</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Spec</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App EC2</td>
+<td>m6i.xlarge</td>
+<td>Always-on</td>
+</tr>
+<tr>
+<td>GPU EC2</td>
+<td>g5.2xlarge</td>
+<td>Largest line item; stop when idle to save</td>
+</tr>
+<tr>
+<td>RDS</td>
+<td>db.t4g.medium, 100 GB gp3</td>
+<td>Single-AZ; ~2× for Multi-AZ</td>
+</tr>
+<tr>
+<td>ALB</td>
+<td>1 ALB</td>
+<td>+ LCU usage</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>Standard</td>
+<td>Usage-based</td>
+</tr>
+<tr>
+<td>NAT Gateway</td>
+<td>single</td>
+<td>Hourly + per-GB</td>
+</tr>
+</tbody>
+</table>
+<p>The GPU instance dominates. If extraction is bursty, stop the GPU box between
+batches (the app box queues tasks; they run when Rhobots Extract is back).</p>
+<hr />
+<h2 id="appendix-a-environment-variables">Appendix A — Environment Variables<a class="headerlink" href="#appendix-a-environment-variables" title="Permanent link">&para;</a></h2>
+<p>Authoritative templates: <a href="../deploy/ec2/app.env.example"><code>deploy/ec2/app.env.example</code></a>
+and <a href="../deploy/ec2/gpu.env.example"><code>deploy/ec2/gpu.env.example</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Where</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ECR_REGISTRY</code>, <code>*_TAG</code></td>
+<td>app</td>
+<td>Image registry + per-image tags</td>
+</tr>
+<tr>
+<td><code>DOMAIN</code></td>
+<td>app</td>
+<td>Public FQDN; drives derived URLs</td>
+</tr>
+<tr>
+<td><code>SECRET_KEY</code>, <code>WEBHOOK_SECRET_KEY</code></td>
+<td>app</td>
+<td>Django secrets</td>
+</tr>
+<tr>
+<td><code>DB_HOST/PORT/USER/PASSWORD/NAME</code></td>
+<td>app</td>
+<td>RDS connection (<code>DB_NAME_AUTH</code> = <code>auth</code>)</td>
+</tr>
+<tr>
+<td><code>CELERY_BROKER_URL</code></td>
+<td>app</td>
+<td><code>redis://redis:6379/0</code> (local container)</td>
+</tr>
+<tr>
+<td><code>AWS_REGION</code>, <code>AWS_STORAGE_BUCKET_NAME</code></td>
+<td>app</td>
+<td>S3 uploads</td>
+</tr>
+<tr>
+<td><code>MINERVA_API_URL</code></td>
+<td>app</td>
+<td><code>http://&lt;gpu_private_ip&gt;:8000</code></td>
+</tr>
+<tr>
+<td><code>BETTER_AUTH_SECRET</code></td>
+<td>app</td>
+<td>Better Auth signing secret; auth's <code>DATABASE_STRING</code> is composed from <code>DB_*</code> + <code>DB_NAME_AUTH</code></td>
+</tr>
+<tr>
+<td><code>REQUIRE_EMAIL_VERIFICATION</code>, <code>*_CLIENT_ID/SECRET</code>, <code>AWS_SENDER_EMAIL</code></td>
+<td>app</td>
+<td>Auth OAuth providers + transactional email</td>
+</tr>
+<tr>
+<td><code>LLM_PROVIDER</code>, <code>GEMINI_MODEL</code>, <code>POLICY_EXTRACT_GEMINI_MODEL</code></td>
+<td>app</td>
+<td>Extraction LLM model selection. <code>GOOGLE_API_KEY</code> / <code>GEMINI_API_KEY</code> only needed when Vertex is off</td>
+</tr>
+<tr>
+<td><code>GOOGLE_GENAI_USE_VERTEXAI</code>, <code>GOOGLE_CLOUD_PROJECT</code>, <code>GOOGLE_CLOUD_LOCATION</code>, <code>GCP_CREDENTIALS_DIR</code>, <code>GOOGLE_APPLICATION_CREDENTIALS</code></td>
+<td>app</td>
+<td>Vertex AI (<strong>on by default</strong>). <code>GCP_CREDENTIALS_DIR</code> (default <code>/home/ubuntu/.gcp</code>, absolute) is the host dir mounted read-only to <code>/secrets/gcp</code> in every LLM container; drop <code>sa-key.json</code> there. <code>GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp/sa-key.json</code> points at it. Blank <code>GOOGLE_GENAI_USE_VERTEXAI</code> = public Gemini API (then fill <code>GOOGLE_API_KEY</code>/<code>GEMINI_API_KEY</code>). See §<a href="#vertex-ai-service-account-key">Vertex AI service-account key</a></td>
+</tr>
+<tr>
+<td><code>RHOBOTS_EXTRACT_IMAGE</code>, <code>RHOBOTS_EXTRACT_PORT</code></td>
+<td>gpu</td>
+<td>Rhobots Extract container image + port</td>
+</tr>
+<tr>
+<td><code>NUXT_PUBLIC_*</code>, <code>NUXT_APP_BASE_URL</code></td>
+<td>app</td>
+<td>Nuxt SSR runtime config; URLs derive from <code>DOMAIN</code> in the <code>web</code> service. Optional overrides: <code>NUXT_PUBLIC_API_SCHEME</code> (default <code>https</code>), <code>NUXT_PUBLIC_ENABLED_SOCIAL_PROVIDERS</code>, <code>NUXT_APP_BASE_URL</code> (default <code>/</code>)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The Nuxt <code>NUXT_PUBLIC_*</code> URLs are injected at <strong>runtime</strong> by the <code>web</code> service
+in <code>docker-compose.app.yml</code>, derived from <code>DOMAIN</code> (see §9). Only the optional
+overrides above belong in <code>app.env</code>.</p>
+</blockquote>
+<hr />
+<h2 id="appendix-b-security-group-rules">Appendix B — Security Group Rules<a class="headerlink" href="#appendix-b-security-group-rules" title="Permanent link">&para;</a></h2>
+<p><strong>ALB SG</strong></p>
+<table>
+<thead>
+<tr>
+<th>Dir</th>
+<th>Port</th>
+<th>Source / Dest</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>In</td>
+<td>80, 443</td>
+<td><code>0.0.0.0/0</code></td>
+</tr>
+<tr>
+<td>Out</td>
+<td>all</td>
+<td><code>0.0.0.0/0</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>App SG</strong></p>
+<table>
+<thead>
+<tr>
+<th>Dir</th>
+<th>Port</th>
+<th>Source / Dest</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>In</td>
+<td>80</td>
+<td>ALB SG only</td>
+</tr>
+<tr>
+<td>Out</td>
+<td>all</td>
+<td><code>0.0.0.0/0</code> (LLM API, ECR, S3, Rhobots Extract, RDS)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>GPU SG</strong></p>
+<table>
+<thead>
+<tr>
+<th>Dir</th>
+<th>Port</th>
+<th>Source / Dest</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>In</td>
+<td>8000</td>
+<td>App SG only</td>
+</tr>
+<tr>
+<td>Out</td>
+<td>all</td>
+<td><code>0.0.0.0/0</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>RDS SG</strong></p>
+<table>
+<thead>
+<tr>
+<th>Dir</th>
+<th>Port</th>
+<th>Source / Dest</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>In</td>
+<td>5432</td>
+<td>App SG only</td>
+</tr>
+<tr>
+<td>Out</td>
+<td>all</td>
+<td><code>0.0.0.0/0</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="appendix-c-decision-log">Appendix C — Decision Log<a class="headerlink" href="#appendix-c-decision-log" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Split GPU box</strong> — Rhobots Extract runs on its own <code>g5.2xlarge</code> instead of sharing the
+  app box (as PB Partners did). Lets the expensive GPU instance be stopped when
+  idle without touching the always-on app services, and isolates GPU driver/OOM
+  failures from the web/API tier.</li>
+<li><strong>Redis as a container, not ElastiCache</strong> — the broker holds transient queue
+  state only (results live in Postgres); a local container removes a managed
+  service and its cost.</li>
+<li><strong>Direct RDS, no Proxy</strong> — a fixed, small set of instances opens few
+  connections; RDS Proxy's pooling/failover-muxing buys little here and adds a
+  hop. TLS is still enforced.</li>
+<li><strong><code>.env</code> files, not ESO/Secrets Manager projection</strong> — without Kubernetes
+  there is no ESO; instance-local env files are the simplest secure option, with
+  SSM Parameter Store available for stricter governance.</li>
+<li><strong>Instance profile, not Pod Identity</strong> — one IAM role on the boxes (S3 + ECR +
+  SSM) replaces the per-workload Pod Identity roles of the EKS path.</li>
+<li><strong>nginx does path routing, not the ALB</strong> — keeps ALB config trivial (one TLS
+  listener → one target group) and mirrors the <code>/</code>, <code>/service-api</code>, <code>/auth</code>
+  split the EKS ingress performs.</li>
+<li><strong>PostgreSQL 16, not 17</strong> — matches the repo standard and the EKS path; the PB
+  Partners reference doc specified 17.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.highlight", "search.suggest", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
