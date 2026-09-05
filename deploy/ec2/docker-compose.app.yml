@@ -138,6 +138,11 @@ services:
     image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
     command: ["bash", "./entrypoint.sh", "celery"]
     restart: always
+    # Celery does a warm shutdown on SIGTERM (stops consuming, drains what is still
+    # running), but compose's default stop grace is 10s and a policy_extract parse
+    # averages ~55s, so a plain `up -d` recreate SIGKILLed children mid-parse. This is
+    # a ceiling, not a wait: an idle worker still exits immediately.
+    stop_grace_period: 300s
     volumes:
       - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: *backend-env
@@ -147,6 +152,7 @@ services:
     # Calls Rhobots Extract on the GPU box (MINERVA_API_URL), then the LLM.
     command: ["bash", "./entrypoint.sh", "celery-policy-extract"]
     restart: always
+    stop_grace_period: 300s
     volumes:
       - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: *backend-env
@@ -155,6 +161,7 @@ services:
     image: ${ECR_REGISTRY}/insur-iq/backend:${BACKEND_TAG}
     command: ["bash", "./entrypoint.sh", "celery-commission-intake"]
     restart: always
+    stop_grace_period: 300s
     volumes:
       - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: *backend-env
@@ -164,6 +171,7 @@ services:
     # Singleton — never run more than one.
     command: ["bash", "./entrypoint.sh", "beat"]
     restart: always
+    stop_grace_period: 300s
     volumes:
       - ${GCP_CREDENTIALS_DIR:-/home/ubuntu/.gcp}:/secrets/gcp:ro   # GCP SA key dir (Vertex AI)
     environment: *backend-env
