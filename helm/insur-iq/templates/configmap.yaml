@@ -22,3 +22,6 @@ data:
   LANGFUSE_HOST: {{ .Values.config.LANGFUSE_HOST | quote }}
   MINERVA_API_URL: {{ .Values.config.MINERVA_API_URL | quote }}
   POLICY_EXTRACT_CALLBACK_URL: {{ default (printf "%s/service-api/policy-extract/callback/" (include "insur-iq.publicUrl" .)) .Values.config.POLICY_EXTRACT_CALLBACK_URL | quote }}
+  POLICY_EXTRACT_SOFT_TIME_LIMIT: {{ .Values.config.POLICY_EXTRACT_SOFT_TIME_LIMIT | quote }}
+  POLICY_EXTRACT_TIME_LIMIT: {{ .Values.config.POLICY_EXTRACT_TIME_LIMIT | quote }}
+  POLICY_EXTRACT_STALE_AFTER: {{ .Values.config.POLICY_EXTRACT_STALE_AFTER | quote }}

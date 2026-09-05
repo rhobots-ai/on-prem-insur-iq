@@ -47,6 +47,9 @@ spec:
             - --queues={{ $cfg.queues }}
             - --concurrency={{ $cfg.concurrency }}
             - --hostname={{ kebabcase $name }}@%h
+            {{- range $cfg.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
           envFrom:
             {{- include "insur-iq.backendEnvFrom" $ | nindent 12 }}
           env:

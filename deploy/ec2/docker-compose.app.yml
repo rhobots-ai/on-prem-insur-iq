@@ -98,6 +98,15 @@ services:
       MINERU_CHUNK_TIMEOUT: ${MINERU_CHUNK_TIMEOUT:-600}
       CINS_SHEET_CONCURRENCY: ${CINS_SHEET_CONCURRENCY:-4}
       POLICY_EXTRACT_CALLBACK_URL: ${POLICY_EXTRACT_CALLBACK_URL:-}
+      # policy_extract worker tuning. CONCURRENCY is read by entrypoint.sh for
+      # --concurrency (peak memory scales with it — budget ~512MB of host RAM per
+      # child). The rest are read by policy_extract/tasks.py, so every service
+      # sharing this anchor must agree: the API's stale-retry check and the beat
+      # reconciler compare against the same threshold the worker enforces.
+      POLICY_EXTRACT_CONCURRENCY: ${POLICY_EXTRACT_CONCURRENCY:-12}
+      POLICY_EXTRACT_SOFT_TIME_LIMIT: ${POLICY_EXTRACT_SOFT_TIME_LIMIT:-900}
+      POLICY_EXTRACT_TIME_LIMIT: ${POLICY_EXTRACT_TIME_LIMIT:-1080}
+      POLICY_EXTRACT_STALE_AFTER: ${POLICY_EXTRACT_STALE_AFTER:-1500}
       LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
