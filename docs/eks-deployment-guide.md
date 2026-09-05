@@ -603,6 +603,7 @@ To grant a pod additional AWS permissions: add the action to the role's policy i
 |---|---|---|
 | `backend.replicas` / `autoscaling.backend.maxReplicas` | 2 / 10 | Bump max if HPA sits at max for >15 min |
 | `celery.policyExtract.replicas` | 4 | Bump if `policy_extract` queue lag grows; no autoscaling on celery |
+| `celery.policyExtract.concurrency` | 12 | Parallel parses per pod. Each prefork child recycles at 512Mi, so raise `celery.policyExtract.resources.limits.memory` (8Gi covers 12) in the same change or the pod is OOMKilled mid-parse |
 | `ingress.idleTimeoutSeconds` | 300 | Lower to default 60s only if no large uploads |
 | `ingress.adminCidrAllowlist` | `[]` | **Set this** before exposing /service-api/admin/* |
 | `podDisruptionBudget.*.minAvailable` | 1 | Set to `0` if you want fastest cluster upgrades |

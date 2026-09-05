@@ -136,6 +136,15 @@ config:
   LANGFUSE_HOST: https://cloud.langfuse.com
   MINERVA_API_URL: ""
   POLICY_EXTRACT_CALLBACK_URL: "" # auto-derives to https://<domain>/service-api/policy-extract/callback/
+  # Read by policy_extract/tasks.py in every pod that imports it, so backend, the
+  # policy_extract worker and beat must all agree: the API's stale-retry check and
+  # the beat reconciler compare against the same threshold the worker enforces.
+  # Time limits scope to the parse task alone (soft -> clean FAILED; hard kills a
+  # child hung past its own MinerU/Gemini timeout). STALE_AFTER must exceed the
+  # hard limit — a SIGKILL there leaves no code running to mark the row failed.
+  POLICY_EXTRACT_SOFT_TIME_LIMIT: "900"
+  POLICY_EXTRACT_TIME_LIMIT: "1080"
+  POLICY_EXTRACT_STALE_AFTER: "1500"
   # Auto-derived from global.domain if blank:
   ALLOWED_HOSTS: ""               # default: <domain>
   CSRF_TRUSTED_ORIGINS: ""        # default: https://<domain>
@@ -294,11 +303,22 @@ celery:
       limits:   { cpu: 1000m, memory: 1Gi }
   policyExtract:
     replicas: 1
-    concurrency: 10
+    # Peak memory scales with concurrency: each prefork child is recycled at the
+    # 512Mi --max-memory-per-child threshold below, so the limit has to cover
+    # roughly concurrency x 512Mi or the pod is OOMKilled mid-parse.
+    concurrency: 12
     queues: policy_extract
+    # Parity with entrypoint.sh's compose worker, which this chart bypasses (it
+    # runs `celery worker` directly). Without these a long-lived child leaks whole
+    # PDFs and LLM payloads across tasks, and a busy worker hoards prefetched
+    # messages it has no slot to start.
+    extraArgs:
+      - --prefetch-multiplier=1
+      - --max-tasks-per-child=50
+      - --max-memory-per-child=512000
     resources:
-      requests: { cpu: 500m, memory: 1Gi }
-      limits:   { cpu: 2000m, memory: 2Gi }
+      requests: { cpu: 1000m, memory: 2Gi }
+      limits:   { cpu: 4000m, memory: 8Gi }
   commissionIntake:
     replicas: 1
     concurrency: 2

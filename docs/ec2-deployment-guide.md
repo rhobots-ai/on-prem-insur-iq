@@ -106,7 +106,7 @@ profile.
 | backend | Django + gunicorn REST API (:8000) |
 | auth | Better Auth — JWT issuance & sessions (:10000) |
 | celery-default | General background tasks |
-| celery-policy-extract | AI extraction pipeline (concurrency 10) |
+| celery-policy-extract | AI extraction pipeline (concurrency 12) |
 | celery-commission-intake | Commission intake queue |
 | celery-beat | Scheduled task runner (singleton) |
 | redis | Celery broker (container) |
@@ -416,9 +416,11 @@ docker compose -f docker-compose.app.yml logs -f celery_policy_extract
 # Restart a service
 docker compose -f docker-compose.app.yml --env-file app.env restart backend
 
-# Scale extraction throughput — worker concurrency is set inside the image's
-# entrypoint.sh (celery-policy-extract mode). For more headroom, resize the app
-# box (vertical) or run the GPU box on a larger instance. There is no HPA here.
+# Scale extraction throughput — POLICY_EXTRACT_CONCURRENCY in app.env (default 12;
+# entrypoint.sh supplies the fallback). Each prefork child recycles at ~512MB, so
+# budget concurrency x 512MB of instance RAM: 12 is ~6GB of the m6i.xlarge's 16GB,
+# shared with the API, the other workers, redis and the SSR frontend. Past that,
+# resize the app box (vertical) or run the GPU box larger. There is no HPA here.
 
 # GPU sanity
 nvidia-smi
